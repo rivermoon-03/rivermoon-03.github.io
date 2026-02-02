@@ -1,0 +1,173 @@
+---
+layout: default
+panel_includes:
+ - toc
+tail_includes:
+ - related-posts
+ - post-nav
+script_includes:
+ - comment
+---
+
+{% include lang.html %}
+
+{% include toc-status.html %}
+
+ 
+ 
+ {{ page.title }} 
+ {% if page.description %}
+ {{ page.description }} 
+ {% endif %}
+
+ 
+ 
+ 
+ {{ site.data.locales[lang].post.posted }}
+ {% include datetime.html date=page.date tooltip=true lang=lang %}
+ 
+
+ 
+ {% if page.last_modified_at and page.last_modified_at != page.date %}
+ 
+ {{ site.data.locales[lang].post.updated }}
+ {% include datetime.html date=page.last_modified_at tooltip=true lang=lang %}
+ 
+ {% endif %}
+
+ {% if page.image %}
+ {% capture src %}src="{{ page.image.path | default: page.image }}"{% endcapture %}
+ {% capture class %}class="preview-img{% if page.image.no_bg %}{{ ' no-bg' }}{% endif %}"{% endcapture %}
+ {% capture alt %}alt="{{ page.image.alt | xml_escape | default: "Preview Image" }}"{% endcapture %}
+
+ {% if page.image.lqip %}
+ {%- capture lqip -%}lqip="{{ page.image.lqip }}"{%- endcapture -%}
+ {% endif %}
+
+ 
+ 
+ {%- if page.image.alt -%}
+ {{ page.image.alt }} 
+ {%- endif -%}
+ 
+ {% endif %}
+
+ 
+ 
+ 
+ {% if page.author %}
+ {% assign authors = page.author %}
+ {% elsif page.authors %}
+ {% assign authors = page.authors %}
+ {% endif %}
+
+ {{ site.data.locales[lang].post.written_by }}
+
+ 
+ {% if authors %}
+ {% for author in authors %}
+ {% if site.data.authors[author].url -%}
+ {{ site.data.authors[author].name }} 
+ {%- else -%}
+ {{ site.data.authors[author].name }}
+ {%- endif %}
+ {% unless forloop.last %}{{ ', ' }}{% endunless %}
+ {% endfor %}
+ {% else %}
+ {{ site.social.name }} 
+ {% endif %}
+ 
+ 
+
+ 
+ 
+ {% if site.pageviews.provider and site.analytics[site.pageviews.provider].id %}
+ 
+ 
+ 
+ 
+ {{ site.data.locales[lang].post.pageview_measure }}
+ 
+ {% endif %}
+
+ 
+ {% include read-time.html content=content prompt=true lang=lang %}
+ 
+ 
+ 
+ 
+
+ {% if enable_toc %}
+ 
+ {{ page.title }} 
+ 
+ 
+ 
+ 
+
+ 
+ {{- site.data.locales[lang].panel.toc -}} 
+ 
+ 
+
+ 
+ 
+ {{- page.title -}} 
+ 
+ 
+ 
+ 
+ 
+ 
+ {% endif %}
+
+ 
+ {% comment %} 포스트 상단 광고 (글의 맨 위) {% endcomment %}
+ {% include post-ad-top.html %}
+ 
+ {{ content }}
+ 
+
+ 
+ 
+ {% if page.categories.size > 0 %}
+ 
+ 
+ {% for category in page.categories %}
+ {{ category }} 
+ {%- unless forloop.last -%},{%- endunless -%}
+ {% endfor %}
+ 
+ {% endif %}
+
+ 
+ {% if page.tags.size > 0 %}
+ 
+ 
+ {% for tag in page.tags %}
+ 
+ {{- tag -}}
+ 
+ {% endfor %}
+ 
+ {% endif %}
+
+ 
+ 
+ {% if site.data.locales[lang].copyright.license.template %}
+ {% capture _replacement %}
+ 
+ {{ site.data.locales[lang].copyright.license.name }}
+ 
+ {% endcapture %}
+
+ {{ site.data.locales[lang].copyright.license.template | replace: ':LICENSE_NAME', _replacement }}
+ {% endif %}
+ 
+
+ {% include post-sharing.html lang=lang %}
+ 
+ 
+ 
+ 
+ 
