@@ -9,15 +9,15 @@ module Jekyll
     alias_method :read_posts_orig, :read_posts
 
     def read_posts(dir)
-      # 원본 메서드 호출
-      read_posts_orig(dir)
+      # 원본 메서드 호출하고 결과 받기
+      result = read_posts_orig(dir)
       
       # _posts의 모든 하위 디렉토리에서도 포스트 읽기
       posts_dir = File.join(@site.source, dir)
-      return unless File.directory?(posts_dir)
+      return result unless File.directory?(posts_dir)
       
       collection = @site.collections["posts"]
-      return unless collection
+      return result unless collection
       
       # 이미 읽은 파일 경로 수집
       existing_paths = collection.docs.map { |doc| doc.path }.to_set
@@ -48,8 +48,13 @@ module Jekyll
         end
       end
       
-      # 모든 새 문서를 한 번에 추가
+      # 모든 새 문서를 컬렉션에 추가
       collection.docs.concat(new_docs) unless new_docs.empty?
+      
+      # 원본 결과에 새 문서 추가하여 반환
+      result ||= []
+      result.concat(new_docs)
+      result
     end
   end
 end
