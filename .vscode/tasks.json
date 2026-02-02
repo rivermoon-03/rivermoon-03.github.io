@@ -21,6 +21,55 @@
       },
       "problemMatcher": [],
       "detail": "Build the Jekyll site for production."
+    },
+    {
+      "label": "블로그: 새 포스트 생성",
+      "type": "shell",
+      "command": "./scripts/blog-manager.sh new",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "대화형으로 새 포스트를 생성합니다.",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "블로그: 포스트 목록 보기",
+      "type": "shell",
+      "command": "./scripts/blog-manager.sh list",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "모든 포스트 목록을 표시합니다.",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "블로그: 통계 보기",
+      "type": "shell",
+      "command": "./scripts/blog-manager.sh stats",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "블로그 통계를 표시합니다.",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "블로그: 로컬 서버 실행",
+      "type": "shell",
+      "command": "./scripts/blog-manager.sh serve",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "Jekyll 로컬 서버를 실행합니다.",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "isBackground": true
     }
   ]
 }
