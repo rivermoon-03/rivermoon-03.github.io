@@ -1,0 +1,54 @@
+---
+---
+
+/* Import Pretendard Variable Font */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
+
+/* Override Global Variables */
+:root {
+  --font-family-sans:
+    'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-family-heading:
+    'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+}
+
+/* Dark Mode Overrides (Black & Yellow Theme) */
+[data-mode='dark'] {
+  /* Backgrounds - Genuine Black */
+  --body-bg: #000000;
+  --sidebar-bg: #000000;
+  --main-wrapper-bg: #000000;
+  --card-bg: #101010;
+  --topbar-wrapper-bg: #000000;
+  --search-wrapper-bg: #000000;
+  --search-tag-bg: #101010;
+
+  /* Accent Color - Yellow (#f5cb42) */
+  --link-color: #f5cb42;
+  --nav-key-color: #f5cb42;
+  --toc-highlight: #f5cb42;
+  --btn-share-hover-color: #f5cb42;
+  --tag-hover: #f5cb42;
+  --sidebar-active-color: #f5cb42;
+  --sidebar-hover-color: #f5cb42;
+  --link-underline-color: #f5cb42;
+
+  /* Text Colors on Black (adjusting for readability if needed) */
+  --text-color: #e0e0e0;
+  --heading-color: #ffffff;
+}
+
+/* Specific Adjustments for better visibility with Yellow */
+[data-mode='dark'] a:hover {
+  color: #ffe680; /* Lighter yellow on hover */
+  border-bottom-color: #f5cb42;
+}
+
+/* Force Table of Contents marker color */
+[data-mode='dark'] #toc-wrapper .is-active-link {
+  color: #f5cb42 !important;
+  border-left-color: #f5cb42 !important;
+}
