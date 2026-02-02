@@ -80,8 +80,8 @@ if [ -z "$FILENAME" ]; then
     FILENAME="untitled"
 fi
 
-# 전체 파일 경로
-POST_FILE="${POSTS_DIR}/${CATEGORY}/${DATE}-${FILENAME}.md"
+# 전체 파일 경로 (_posts 루트에 직접 생성)
+POST_FILE="${POSTS_DIR}/${DATE}-${FILENAME}.md"
 
 # 파일이 이미 존재하는지 확인
 if [ -f "$POST_FILE" ]; then
@@ -93,9 +93,6 @@ if [ -f "$POST_FILE" ]; then
         exit 1
     fi
 fi
-
-# 카테고리 디렉토리 생성 (없는 경우)
-mkdir -p "${POSTS_DIR}/${CATEGORY}"
 
 # 포스트 템플릿 생성
 cat > "$POST_FILE" <<EOF

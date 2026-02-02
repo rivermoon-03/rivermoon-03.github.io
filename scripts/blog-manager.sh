@@ -37,16 +37,10 @@ usage() {
 
 # 함수: 포스트 목록 출력
 list_posts() {
-    local category="$1"
-    local search_dir="${POSTS_DIR}"
+    local filter_category="$1"
     
-    if [ -n "$category" ]; then
-        search_dir="${POSTS_DIR}/${category}"
-        if [ ! -d "$search_dir" ]; then
-            echo -e "${RED}오류: 카테고리 '${category}'를 찾을 수 없습니다.${NC}"
-            exit 1
-        fi
-        echo -e "${CYAN}카테고리: ${category}${NC}"
+    if [ -n "$filter_category" ]; then
+        echo -e "${CYAN}카테고리: ${filter_category}${NC}"
     else
         echo -e "${CYAN}모든 포스트:${NC}"
     fi
@@ -56,10 +50,18 @@ list_posts() {
     local count=0
     while IFS= read -r file; do
         if [ -f "$file" ] && [[ "$file" == *.md ]]; then
+            # Front matter에서 카테고리 추출
+            local categories=$(grep -m 1 "^categories:" "$file" 2>/dev/null | sed 's/^categories: *\[\(.*\)\]$/\1/' | sed 's/, */ /g' | sed 's/"//g' | sed "s/'//g")
+            
+            # 카테고리 필터링
+            if [ -n "$filter_category" ]; then
+                if [[ ! "$categories" =~ $filter_category ]]; then
+                    continue
+                fi
+            fi
+            
             count=$((count + 1))
             local filename=$(basename "$file")
-            local dir=$(dirname "$file")
-            local cat=$(basename "$dir")
             
             # Front matter에서 제목 추출
             local title=$(grep -m 1 "^title:" "$file" 2>/dev/null | sed 's/^title: *"\(.*\)"$/\1/' | sed "s/^title: *'\(.*\)'$/\1/")
@@ -71,8 +73,8 @@ list_posts() {
             local date=$(grep -m 1 "^date:" "$file" 2>/dev/null | sed 's/^date: *//' | cut -d' ' -f1)
             
             printf "${GREEN}%3d.${NC} " "$count"
-            if [ -z "$category" ]; then
-                printf "${YELLOW}[%s]${NC} " "$cat"
+            if [ -z "$filter_category" ] && [ -n "$categories" ]; then
+                printf "${YELLOW}[%s]${NC} " "$categories"
             fi
             printf "${BLUE}%s${NC}" "$title"
             if [ -n "$date" ]; then
@@ -82,7 +84,7 @@ list_posts() {
             echo "    ${file}"
             echo ""
         fi
-    done < <(find "$search_dir" -type f -name "*.md" 2>/dev/null | sort -r)
+    done < <(find "$POSTS_DIR" -maxdepth 1 -type f -name "*.md" 2>/dev/null | sort -r)
     
     if [ $count -eq 0 ]; then
         echo -e "${YELLOW}포스트가 없습니다.${NC}"
@@ -101,18 +103,29 @@ show_stats() {
     local 개발=0
     local 리뷰=0
     
-    for category in "잡담" "개발" "리뷰"; do
-        local count=$(find "${POSTS_DIR}/${category}" -type f -name "*.md" 2>/dev/null | wc -l)
-        total=$((total + count))
-        
-        case "$category" in
-            "잡담") 잡담=$count ;;
-            "개발") 개발=$count ;;
-            "리뷰") 리뷰=$count ;;
-        esac
-        
-        printf "${BLUE}%-10s:${NC} ${GREEN}%3d${NC} 개\n" "$category" "$count"
-    done
+    # 모든 포스트를 읽어서 카테고리별로 카운트
+    while IFS= read -r file; do
+        if [ -f "$file" ] && [[ "$file" == *.md ]]; then
+            total=$((total + 1))
+            
+            # Front matter에서 카테고리 추출
+            local categories=$(grep -m 1 "^categories:" "$file" 2>/dev/null | sed 's/^categories: *\[\(.*\)\]$/\1/' | sed 's/, */ /g' | sed 's/"//g' | sed "s/'//g")
+            
+            if [[ "$categories" =~ 잡담 ]]; then
+                잡담=$((잡담 + 1))
+            fi
+            if [[ "$categories" =~ 개발 ]]; then
+                개발=$((개발 + 1))
+            fi
+            if [[ "$categories" =~ 리뷰 ]]; then
+                리뷰=$((리뷰 + 1))
+            fi
+        fi
+    done < <(find "$POSTS_DIR" -maxdepth 1 -type f -name "*.md" 2>/dev/null)
+    
+    printf "${BLUE}%-10s:${NC} ${GREEN}%3d${NC} 개\n" "잡담" "$잡담"
+    printf "${BLUE}%-10s:${NC} ${GREEN}%3d${NC} 개\n" "개발" "$개발"
+    printf "${BLUE}%-10s:${NC} ${GREEN}%3d${NC} 개\n" "리뷰" "$리뷰"
     
     echo ""
     echo -e "${CYAN}총 포스트:${NC} ${GREEN}${total}${NC} 개"
@@ -125,8 +138,7 @@ show_stats() {
         if [ -f "$file" ] && [[ "$file" == *.md ]]; then
             recent=$((recent + 1))
             local filename=$(basename "$file")
-            local dir=$(dirname "$file")
-            local cat=$(basename "$dir")
+            local categories=$(grep -m 1 "^categories:" "$file" 2>/dev/null | sed 's/^categories: *\[\(.*\)\]$/\1/' | sed 's/, */ /g' | sed 's/"//g' | sed "s/'//g")
             local title=$(grep -m 1 "^title:" "$file" 2>/dev/null | sed 's/^title: *"\(.*\)"$/\1/' | sed "s/^title: *'\(.*\)'$/\1/")
             local date=$(grep -m 1 "^date:" "$file" 2>/dev/null | sed 's/^date: *//' | cut -d' ' -f1)
             
@@ -134,9 +146,13 @@ show_stats() {
                 title="$filename"
             fi
             
-            printf "  ${YELLOW}[%s]${NC} ${BLUE}%s${NC} ${CYAN}(%s)${NC}\n" "$cat" "$title" "$date"
+            if [ -n "$categories" ]; then
+                printf "  ${YELLOW}[%s]${NC} ${BLUE}%s${NC} ${CYAN}(%s)${NC}\n" "$categories" "$title" "$date"
+            else
+                printf "  ${BLUE}%s${NC} ${CYAN}(%s)${NC}\n" "$title" "$date"
+            fi
         fi
-    done < <(find "$POSTS_DIR" -type f -name "*.md" 2>/dev/null | sort -r)
+    done < <(find "$POSTS_DIR" -maxdepth 1 -type f -name "*.md" 2>/dev/null | sort -r)
 }
 
 # 함수: 새 포스트 생성 (대화형)
