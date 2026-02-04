@@ -52,3 +52,10 @@
   color: #f5cb42 !important;
   border-left-color: #f5cb42 !important;
 }
+
+/* Remove gradient overlay from images in post content */
+.content img {
+  filter: none !important;
+  -webkit-filter: none !important;
+  background: none !important;
+}
