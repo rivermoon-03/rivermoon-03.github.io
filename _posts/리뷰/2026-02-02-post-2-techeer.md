@@ -26,7 +26,7 @@ _2025-12-29 ~ 2026-01-31_
 
 - [Medium Blog](https://medium.com/@ibonet30/%EB%82%B4-%EB%B6%80%EB%8F%99%EC%82%B0-%EC%9E%90%EC%82%B0%EC%9D%84-%EC%9D%B4%ED%95%B4%ED%95%98%EB%8A%94-%ED%99%94%EB%A9%B4-85e5fdd41569?postPublishedType=repub)
 
-SweetHome은 부동산 데이터를 수집 및 활용하여 한 서비스 내에서 시세 변화, 뉴스, 부동산 통계 등을 한 번에 볼 수 있게 시각화한 서비스입니다.
+SweetHome은 부동산 데이터를 수집 및 활용하여 한 서비스 내에서 시세 변화, 뉴스, 부동산 통계 등을 한 번에 볼 수 있게 시각화한 서비스입니다 .
 
 ---
 
