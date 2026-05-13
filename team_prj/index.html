@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>서버 예약 시스템 — 시뮬레이션</title>
+<style>
+/* ── Reset & Base ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #263249;
+  --border: #334155;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --text-xdim: #475569;
+  --accent: #3b82f6;
+  --accent-dim: #1d4ed8;
+  --green: #22c55e;
+  --yellow: #f59e0b;
+  --red: #ef4444;
+  --purple: #a855f7;
+  --cyan: #06b6d4;
+
+  --stu-color: #3b82f6;
+  --mgr-color: #a855f7;
+  --adm-color: #f59e0b;
+  --sys-color: #06b6d4;
+
+  --avail: #22c55e;
+  --reserved: #f59e0b;
+  --inuse: #3b82f6;
+  --maintenance: #94a3b8;
+  --quota-color: #10b981;
+
+  font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+}
+body { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── Header ───────────────────────────────────────────── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+header h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+header .subtitle { font-size: 12px; color: var(--text-dim); }
+
+/* ── Scenario Selector ────────────────────────────────── */
+.scenario-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.scenario-bar label { font-size: 12px; color: var(--text-dim); margin-right: 4px; }
+.scen-btn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.scen-btn:hover { border-color: var(--accent); color: var(--text); }
+.scen-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ── Controls ─────────────────────────────────────────── */
+.controls {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.ctrl-btn {
+  padding: 5px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .15s;
+  display: flex; align-items: center; gap: 5px;
+}
+.ctrl-btn:hover { background: var(--border); }
+.ctrl-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ctrl-btn.primary:hover { background: var(--accent-dim); }
+.ctrl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.step-indicator {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-left: auto;
+}
+/* ── Main Layout ──────────────────────────────────────── */
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 200px 1fr 220px;
+  grid-template-rows: 1fr 200px;
+  gap: 0;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Panel shared ─────────────────────────────────────── */
+.panel {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-title {
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--text-xdim);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* ── Actors Panel (left) ──────────────────────────────── */
+.actors-panel {
+  grid-row: 1 / 2;
+  grid-column: 1 / 2;
+}
+.actor-list { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.actor-card {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  transition: all .2s;
+  background: var(--surface);
+}
+.actor-card.active-actor {
+  border-color: var(--actor-color, var(--accent));
+  box-shadow: 0 0 0 2px var(--actor-color, var(--accent))30,
+              0 0 14px var(--actor-color, var(--accent))20;
+}
+.actor-icon {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+  background: var(--actor-color, var(--accent))22;
+  border: 1.5px solid var(--actor-color, var(--accent))66;
+}
+.actor-info { flex: 1; min-width: 0; }
+.actor-name { font-size: 14px; font-weight: 700; }
+.actor-role { font-size: 12px; color: var(--text-dim); margin-top: 2px; line-height: 1.3; }
+.actor-quota {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.quota-bar {
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+.quota-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--quota-color);
+  transition: width .4s ease;
+}
+.quota-fill.low { background: var(--yellow); }
+.quota-fill.critical { background: var(--red); }
+.actor-notify {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--red);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  display: none;
+  align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.actor-notify.show { display: flex; }
+
+/* ── Stage (center) ───────────────────────────────────── */
+.stage-panel {
+  grid-row: 1 / 2;
+  grid-column: 2 / 3;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+.stage-canvas {
+  width: 100%; height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* SVG overlay for arrows */
+.stage-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── Flow Lanes ───────────────────────────────────────── */
+.lanes {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px 20px;
+  gap: 12px;
+}
+.lane {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+  height: 56px;
+  flex-shrink: 0;
+}
+.lane-label {
+  width: 80px;
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: var(--lane-color, var(--text-dim));
+}
+.lane-line {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, var(--lane-color, var(--border)) 0%, transparent 100%);
+  position: relative;
+}
+
+/* ── Message Bubble ───────────────────────────────────── */
+.msg-bubble {
+  position: absolute;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s;
+  max-width: 240px;
+  white-space: normal;
+  line-height: 1.5;
+}
+.msg-bubble.visible { opacity: 1; }
+.msg-bubble.msg-stu { border-color: var(--stu-color)80; color: var(--text); }
+.msg-bubble.msg-mgr { border-color: var(--mgr-color)80; }
+.msg-bubble.msg-adm { border-color: var(--adm-color)80; }
+.msg-bubble.msg-sys { border-color: var(--sys-color)80; }
+.msg-bubble.msg-success { border-color: var(--green)80; }
+.msg-bubble.msg-error { border-color: var(--red)80; }
+.msg-bubble.msg-warn { border-color: var(--yellow)80; }
+
+/* ── Animated Arrow ───────────────────────────────────── */
+.arrow-path {
+  stroke-dasharray: 8 4;
+  stroke-dashoffset: 0;
+  animation: dashMove .6s linear infinite;
+  fill: none;
+  stroke-width: 2;
+}
+@keyframes dashMove {
+  to { stroke-dashoffset: -12; }
+}
+
+/* ── Servers Panel (right) ────────────────────────────── */
+.servers-panel {
+  grid-row: 1 / 2;
+  grid-column: 3 / 4;
+  border-right: none;
+}
+.server-list { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.server-card {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  background: var(--surface);
+  transition: all .3s;
+  cursor: default;
+}
+.server-card.highlight {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent)30;
+}
+.server-card.pulse {
+  animation: serverPulse .6s ease 3;
+}
+@keyframes serverPulse {
+  0%,100% { box-shadow: none; }
+  50% { box-shadow: 0 0 0 4px var(--accent)40; }
+}
+.server-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.server-name { font-size: 14px; font-weight: 700; }
+.server-spec { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+.server-owner { font-size: 12px; color: var(--text-dim); margin-top: 5px; }
+.status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+  letter-spacing: .3px;
+  flex-shrink: 0;
+}
+.status-AVAILABLE { background: var(--avail)20; color: var(--avail); border: 1px solid var(--avail)40; }
+.status-RESERVED { background: var(--reserved)20; color: var(--reserved); border: 1px solid var(--reserved)40; }
+.status-IN_USE { background: var(--inuse)20; color: var(--inuse); border: 1px solid var(--inuse)40; }
+.status-MAINTENANCE { background: var(--maintenance)20; color: var(--maintenance); border: 1px solid var(--maintenance)40; }
+.server-progress {
+  margin-top: 6px;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.server-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--inuse);
+  transition: width .5s ease;
+}
+
+/* ── Log Panel (bottom) ───────────────────────────────── */
+.log-panel {
+  grid-row: 2 / 3;
+  grid-column: 1 / 4;
+  border-top: 1px solid var(--border);
+  border-right: none;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+}
+.log-header {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--text-xdim);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.log-clear {
+  margin-left: auto;
+  padding: 2px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 11px;
+  cursor: pointer;
+}
+.log-clear:hover { background: var(--border); }
+.log-entries {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  scroll-behavior: smooth;
+}
+.log-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border)60;
+}
+.log-entry:last-child { border-bottom: none; }
+.log-time { font-size: 12px; color: var(--text-xdim); flex-shrink: 0; font-variant-numeric: tabular-nums; min-width: 36px; }
+.log-step { font-size: 12px; font-weight: 700; flex-shrink: 0; min-width: 52px; }
+.log-step.stu { color: var(--stu-color); }
+.log-step.mgr { color: var(--mgr-color); }
+.log-step.adm { color: var(--adm-color); }
+.log-step.sys { color: var(--sys-color); }
+.log-step.system { color: var(--text-dim); }
+.log-msg { color: var(--text); flex: 1; font-size: 13px; }
+.log-msg.success { color: var(--green); }
+.log-msg.error { color: var(--red); }
+.log-msg.warn { color: var(--yellow); }
+.log-msg.info { color: var(--cyan); }
+.log-uc { font-size: 11px; color: var(--text-xdim); flex-shrink: 0; }
+
+/* ── Flow Diagram (center stage) ─────────────────────── */
+.flow-area {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.flow-diagram {
+  width: calc(100% - 32px);
+  height: calc(100% - 32px);
+  position: relative;
+}
+.flow-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* ── Step Boxes ───────────────────────────────────────── */
+.step-box {
+  position: absolute;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 11px;
+  line-height: 1.4;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  transition: all .3s;
+  max-width: 180px;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0.35;
+}
+.step-box.current {
+  opacity: 1;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent)30, 0 4px 20px #0006;
+}
+.step-box.done {
+  opacity: 0.7;
+  border-color: var(--green)60;
+}
+.step-box.error {
+  border-color: var(--red)80;
+  opacity: 1;
+}
+.step-box.warn {
+  border-color: var(--yellow)80;
+  opacity: 1;
+}
+.step-num {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--border);
+  line-height: 16px;
+  text-align: center;
+  margin-right: 4px;
+}
+.step-box.current .step-num { background: var(--accent); }
+.step-box.done .step-num { background: var(--green); }
+
+/* ── Scenario description ─────────────────────────────── */
+.scenario-desc {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+  flex-shrink: 0;
+}
+.scenario-desc strong { color: var(--text); }
+
+/* ── Connection lines ─────────────────────────────────── */
+.conn-line {
+  stroke: var(--border);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  fill: none;
+}
+.conn-line.active {
+  stroke: var(--accent);
+  stroke-dasharray: 6 3;
+  animation: dashMove .5s linear infinite;
+}
+.conn-line.success { stroke: var(--green); }
+.conn-line.error { stroke: var(--red); }
+.conn-line.warn { stroke: var(--yellow); }
+
+/* ── Actor nodes in flow ──────────────────────────────── */
+.flow-actor {
+  position: absolute;
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.flow-actor-icon {
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  border: 2px solid var(--actor-color, var(--border));
+  background: var(--actor-color, var(--border))15;
+  transition: all .3s;
+}
+.flow-actor.active-flow .flow-actor-icon {
+  box-shadow: 0 0 0 4px var(--actor-color, var(--accent))30;
+  animation: actorPulse .8s ease infinite;
+}
+@keyframes actorPulse {
+  0%,100% { box-shadow: 0 0 0 3px var(--actor-color)30; }
+  50% { box-shadow: 0 0 0 7px var(--actor-color)15; }
+}
+.flow-actor-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--actor-color, var(--text-dim));
+  text-align: center;
+}
+
+/* ── System box in flow ───────────────────────────────── */
+.flow-system {
+  position: absolute;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  padding: 8px 12px;
+  text-align: center;
+  transition: all .3s;
+}
+.flow-system.active-system {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent)20;
+}
+.flow-system-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+}
+.flow-system-sub {
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* ── Notification toast ───────────────────────────────── */
+.toast-container {
+  position: fixed;
+  top: 60px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 100;
+  pointer-events: none;
+}
+.toast {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  min-width: 220px;
+  max-width: 300px;
+  box-shadow: 0 4px 20px #0006;
+  animation: toastIn .2s ease;
+  line-height: 1.5;
+}
+.toast.success { border-color: var(--green)80; }
+.toast.error { border-color: var(--red)80; }
+.toast.warn { border-color: var(--yellow)80; }
+.toast.info { border-color: var(--cyan)80; }
+@keyframes toastIn {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.toast-title { font-weight: 700; margin-bottom: 3px; font-size: 13px; }
+.toast-title.success { color: var(--green); }
+.toast-title.error { color: var(--red); }
+.toast-title.warn { color: var(--yellow); }
+.toast-title.info { color: var(--cyan); }
+
+/* ── Progress bar ─────────────────────────────────────── */
+.progress-track {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: visible;
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width .3s ease;
+}
+
+/* ── Scrollbars ───────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── System Component Cards ───────────────────────────── */
+.comp-card {
+  position: absolute;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all .25s;
+  pointer-events: none;
+  min-width: 0;
+}
+.comp-card-icon { font-size: 28px; flex-shrink: 0; }
+.comp-card-info { min-width: 0; }
+.comp-card-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+.comp-card-sub {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-top: 3px;
+  white-space: nowrap;
+}
+.comp-card.comp-active {
+  border-color: var(--comp-color, var(--accent));
+  background: color-mix(in srgb, var(--comp-color, var(--accent)) 12%, var(--surface));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--comp-color, var(--accent)) 30%, transparent),
+              0 0 16px color-mix(in srgb, var(--comp-color, var(--accent)) 20%, transparent);
+}
+.comp-card.comp-active .comp-card-name {
+  color: var(--comp-color, var(--accent));
+}
+
+/* ── Utility ──────────────────────────────────────────── */
+.hidden { display: none !important; }
+.tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>서버 예약/할당 관리 시스템</h1>
+  <span class="subtitle">유스케이스 인터랙션 시뮬레이터</span>
+</header>
+
+<div class="scenario-bar">
+  <label>시나리오</label>
+  <button class="scen-btn active" data-scen="A">A. 정상 예약</button>
+  <button class="scen-btn" data-scen="B">B. Quota 초과 → 승인</button>
+  <button class="scen-btn" data-scen="C">C. 동시 충돌</button>
+  <button class="scen-btn" data-scen="D">D. 유휴 자동 회수</button>
+  <button class="scen-btn" data-scen="E">E. 만료 자동 반납</button>
+  <button class="scen-btn" data-scen="F">F. 타임아웃 자동 거절</button>
+  <button class="scen-btn" data-scen="G">G. 예약 취소</button>
+  <button class="scen-btn" data-scen="H">H. MGR 명시적 거절</button>
+  <button class="scen-btn" data-scen="I">I. 서버 점검 등록</button>
+  <button class="scen-btn" data-scen="J">J. Quota 상향 조정</button>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn" id="btnPrev" disabled>◀ 이전 단계</button>
+  <button class="ctrl-btn primary" id="btnNext">다음 단계 ▶</button>
+  <button class="ctrl-btn" id="btnReset">↺ 초기화</button>
+  <div class="progress-track" id="progressTrack">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+  <span class="step-indicator" id="stepIndicator">—</span>
+</div>
+
+<div class="main">
+  <!-- Left: Actors -->
+  <div class="panel actors-panel">
+    <div class="panel-title">액터</div>
+    <div class="actor-list" id="actorList"></div>
+  </div>
+
+  <!-- Center: Stage -->
+  <div class="stage-panel">
+    <div id="scenDesc" class="scenario-desc hidden"></div>
+    <div class="flow-area" id="flowArea">
+      <div class="flow-diagram" id="flowDiagram">
+        <svg class="flow-svg" id="flowSvg"></svg>
+        <div id="flowActors"></div>
+        <div id="flowMsgs"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Servers -->
+  <div class="panel servers-panel">
+    <div class="panel-title">서버 풀</div>
+    <div class="server-list" id="serverList"></div>
+  </div>
+
+  <!-- Bottom: Log -->
+  <div class="log-panel">
+    <div class="log-header">
+      이벤트 로그
+      <button class="log-clear" id="btnClearLog">지우기</button>
+    </div>
+    <div class="log-entries" id="logEntries"></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA — initial state
+// ═══════════════════════════════════════════════════════
+const INITIAL_STATE = () => ({
+  servers: [
+    { id: 'svr-01', name: 'svr-01', spec: 'GPU×4 32GB', status: 'AVAILABLE', owner: null, usage: 0 },
+    { id: 'svr-02', name: 'svr-02', spec: 'GPU×2 16GB', status: 'AVAILABLE', owner: null, usage: 0 },
+    { id: 'svr-03', name: 'svr-03', spec: 'CPU×32 64GB', status: 'AVAILABLE', owner: null, usage: 0 },
+  ],
+  actors: {
+    STU:  { name: '학생(최민호)', role: '석사 과정생', emoji: '🎓', color: 'var(--stu-color)', quotaMax: 10, quotaUsed: 0, notify: 0 },
+    STU2: { name: '학생(조동화)', role: '박사 과정생',  emoji: '📚', color: 'var(--stu-color)', quotaMax: 10, quotaUsed: 0, notify: 0 },
+    MGR:  { name: '팀 관리자',   role: '지도교수',      emoji: '👨‍🏫', color: 'var(--mgr-color)', quotaMax: null, quotaUsed: null, notify: 0 },
+    ADM:  { name: '서버 관리자', role: '인프라 담당',   emoji: '🖥️', color: 'var(--adm-color)', quotaMax: null, quotaUsed: null, notify: 0 },
+    SYS:  { name: '모니터링 시스템', role: '자동화 에이전트', emoji: '⚙️', color: 'var(--sys-color)', quotaMax: null, quotaUsed: null, notify: 0 },
+  },
+  approval: null,
+  version: { 'svr-01': 42, 'svr-02': 10, 'svr-03': 5 },
+});
+
+// ═══════════════════════════════════════════════════════
+// SCENARIOS
+// ═══════════════════════════════════════════════════════
+const SCENARIOS = {
+
+  A: {
+    title: '시나리오 A — 정상 예약',
+    desc: '최민호(STU)이 Quota가 충분한 상태에서 <strong>svr-01</strong>을 7일 예약하고, 작업 후 조기 반납합니다.',
+    actors: ['STU', 'SYS'],
+    setup(s) { s.actors.STU.quotaUsed = 0; },
+    steps: [
+      { uc:'UC01', actor:'STU', target:'SYS', comp:'reservation,db', msg:'서버 현황 조회 요청', type:'stu', log:'최민호이 로그인 후 "서버 현황" 메뉴를 열었습니다.' },
+      { uc:'UC01', actor:'SYS', target:'STU', comp:'reservation', msg:'서버 목록 반환\n(svr-01 AVAILABLE)', type:'sys', log:'시스템이 서버 3대의 상태·사양을 반환했습니다.', serverHighlight:'svr-01' },
+      { uc:'UC04', actor:'STU', target:'SYS', comp:'reservation', msg:'예약 요청\nsvr-01 / 7일', type:'stu', log:'최민호이 svr-01, 2026-05-14~21 (7일) 예약 폼을 제출했습니다.' },
+      { uc:'UC04', actor:'SYS', target:null, comp:'quota', msg:'①Quota 확인\n잔여 10 ≥ 요청 7 ✓', type:'sys', log:'Quota 확인: 잔여 10 ≥ 요청 7 — 통과', logType:'info' },
+      { uc:'UC04', actor:'SYS', target:null, comp:'reservation,quota,db', msg:'②낙관적 잠금\nversion=42→43 · 트랜잭션', type:'sys', log:'낙관적 잠금: svr-01 version 42 → 43 업데이트 성공 / 트랜잭션 커밋', logType:'info',
+        serverUpdate:{ id:'svr-01', status:'RESERVED', owner:'최민호 (STU)', usage:0 },
+        quotaUpdate:{ actor:'STU', used:7 } },
+      { uc:'UC04', actor:'SYS', target:'STU', comp:'notification', msg:'예약 확정 ✅\n남은 Quota: 3', type:'success', log:'예약 확정 — svr-01 / 5/14~5/21 / 남은 Quota: 3', logType:'success',
+        toast:{ type:'success', title:'예약 확정', msg:'svr-01 · 7일 예약이 완료되었습니다.\n남은 Quota: 3' } },
+      { uc:'UC14', actor:'SYS', target:null, comp:'monitoring', msg:'사용률 수집 시작\n(1분 주기)', type:'sys', log:'SYS가 svr-01 사용률 수집을 시작했습니다 (1분 주기).', logType:'info',
+        serverUpdate:{ id:'svr-01', status:'IN_USE', owner:'최민호 (STU)', usage:72 } },
+      { uc:'UC07', actor:'STU', target:'SYS', comp:'reservation', msg:'조기 반납 요청\nsvr-01', type:'stu', log:'최민호이 작업 완료 후 svr-01 반납 버튼을 눌렀습니다.' },
+      { uc:'UC07', actor:'SYS', target:'STU', comp:'reservation,quota,notification', msg:'반납 완료 ✅\nQuota 10 회복', type:'success', log:'반납 완료 — svr-01 AVAILABLE 복귀 / Quota 7 회복 (총 10)', logType:'success',
+        serverUpdate:{ id:'svr-01', status:'AVAILABLE', owner:null, usage:0 },
+        quotaUpdate:{ actor:'STU', used:0 },
+        toast:{ type:'success', title:'반납 완료', msg:'svr-01이 반납되었습니다. Quota가 회복되었습니다.' } },
+    ]
+  },
+
+  B: {
+    title: '시나리오 B — Quota 초과 → MGR 승인',
+    desc: '최민호(STU)의 남은 Quota가 <strong>3</strong>인데 10일 예약을 시도합니다. Quota 초과로 팀 관리자(MGR) 결재가 필요합니다.',
+    actors: ['STU', 'MGR', 'SYS'],
+    setup(s) { s.actors.STU.quotaUsed = 7; },
+    steps: [
+      { uc:'UC04', actor:'STU', target:'SYS', comp:'reservation', msg:'예약 요청\nsvr-01 / 10일', type:'stu', log:'최민호이 svr-01 10일 예약을 시도했습니다. (현재 Quota 잔여: 3)' },
+      { uc:'UC04', actor:'SYS', target:'STU', comp:'quota', msg:'❌ Quota 부족\n잔여 3 < 요청 10', type:'error', log:'Quota 부족 — 잔여 3, 요청 10, 초과량 7', logType:'error',
+        toast:{ type:'warn', title:'Quota 부족', msg:'잔여 Quota(3)가 부족합니다.\n초과 승인을 요청하시겠습니까?' } },
+      { uc:'UC08', actor:'STU', target:'SYS', comp:'approval,quota', msg:'초과 승인 요청\nApprovalRequest 생성', type:'stu', log:'최민호이 [승인 요청] 버튼을 눌렀습니다. ApprovalRequest 생성.' },
+      { uc:'UC08', actor:'SYS', target:'MGR', comp:'approval,notification', msg:'승인 요청 알림 발송\n최민호 / 10일 / +7 초과', type:'sys', log:'MGR에게 승인 요청 알림이 발송되었습니다.',
+        notifyUpdate:{ actor:'MGR', delta:1 } },
+      { uc:'UC09', actor:'MGR', target:'SYS', comp:'approval', msg:'승인 ✅\n(초과 허용)', type:'mgr', log:'팀 관리자가 최민호의 초과 요청을 승인했습니다.',
+        notifyUpdate:{ actor:'MGR', delta:-1 } },
+      { uc:'UC09', actor:'SYS', target:null, comp:'reservation,quota,db', msg:'예약 자동 확정\nQuota 임시 한도 적용', type:'sys', log:'승인 완료 — 예약 자동 확정. svr-01 RESERVED 처리.', logType:'success',
+        serverUpdate:{ id:'svr-01', status:'RESERVED', owner:'최민호 (STU)', usage:0 },
+        quotaUpdate:{ actor:'STU', used:10 } },
+      { uc:'UC03-a', actor:'SYS', target:'STU', comp:'notification', msg:'알림: 승인되었습니다\nsvr-01 · 10일 확정', type:'success', log:'최민호에게 승인 알림 전송 — svr-01 10일 예약 확정', logType:'success',
+        notifyUpdate:{ actor:'STU', delta:1 },
+        toast:{ type:'success', title:'승인 완료', msg:'팀 관리자가 초과 요청을 승인했습니다.\nsvr-01 · 10일 예약이 확정되었습니다.' } },
+    ]
+  },
+
+  C: {
+    title: '시나리오 C — 동시 예약 충돌',
+    desc: '최민호(STU)과 조동화(STU2)이 <strong>svr-01</strong>을 거의 동시에 예약 시도합니다. 낙관적 잠금(version)으로 충돌을 해결합니다.',
+    actors: ['STU', 'STU2', 'SYS'],
+    setup(s) { s.actors.STU.quotaUsed = 0; s.actors.STU2.quotaUsed = 0; },
+    steps: [
+      { uc:'UC04', actor:'STU',  target:'SYS', comp:'reservation,db', msg:'예약 요청\nsvr-01 / version=42 읽음', type:'stu', log:'최민호 — svr-01 version=42 읽기 완료.' },
+      { uc:'UC04', actor:'STU2', target:'SYS', comp:'reservation,db', msg:'예약 요청\nsvr-01 / version=42 읽음', type:'stu', log:'조동화 — (거의 동시에) svr-01 version=42 읽기 완료.' },
+      { uc:'UC04', actor:'STU',  target:'SYS', comp:'reservation,db', msg:'UPDATE version=42\n→ 43 (성공)', type:'stu', log:'최민호의 UPDATE 먼저 도착 — version 42→43 성공',
+        serverUpdate:{ id:'svr-01', status:'RESERVED', owner:'최민호 (STU)', usage:0 },
+        quotaUpdate:{ actor:'STU', used:7 } },
+      { uc:'UC04', actor:'SYS',  target:'STU', comp:'notification', msg:'예약 확정 ✅\nversion=43', type:'success', log:'최민호 예약 확정 — svr-01 RESERVED (version=43)', logType:'success',
+        toast:{ type:'success', title:'예약 확정 (최민호)', msg:'svr-01 예약 성공 — 낙관적 잠금 획득' } },
+      { uc:'UC04', actor:'STU2', target:'SYS', comp:'reservation,db', msg:'UPDATE version=42\n❌ 이미 version=43', type:'error', log:'조동화의 UPDATE 실패 — 이미 version=43으로 변경됨 (낙관적 잠금 충돌)', logType:'error' },
+      { uc:'UC03-d', actor:'SYS', target:'STU2', comp:'notification', msg:'충돌 알림\n대안 서버 목록 제공', type:'warn', log:'조동화에게 충돌 알림 + 대안 서버(svr-02, svr-03) 안내',
+        notifyUpdate:{ actor:'STU2', delta:1 },
+        serverHighlight:'svr-02',
+        toast:{ type:'warn', title:'예약 충돌 (조동화)', msg:'다른 사용자가 방금 예약했습니다.\n대안 서버: svr-02, svr-03' } },
+      { uc:'UC04', actor:'STU2', target:'SYS', comp:'reservation,quota', msg:'svr-02 재요청', type:'stu', log:'조동화이 대안 서버 svr-02로 재예약 시도.' },
+      { uc:'UC04', actor:'SYS',  target:'STU2', comp:'reservation,notification', msg:'svr-02 예약 확정 ✅', type:'success', log:'조동화 — svr-02 예약 확정', logType:'success',
+        serverUpdate:{ id:'svr-02', status:'RESERVED', owner:'조동화 (STU2)', usage:0 },
+        quotaUpdate:{ actor:'STU2', used:5 },
+        toast:{ type:'success', title:'예약 확정 (조동화)', msg:'svr-02 예약 성공!' } },
+    ]
+  },
+
+  D: {
+    title: '시나리오 D — 유휴 자동 회수 (UC15)',
+    desc: '최민호이 svr-01을 사용 중이지만 사용률이 5% 이하로 30분 지속됩니다. SYS가 경고 후 자동 회수합니다.',
+    actors: ['STU', 'SYS'],
+    setup(s) {
+      s.servers[0].status = 'IN_USE'; s.servers[0].owner = '최민호 (STU)'; s.servers[0].usage = 3;
+      s.actors.STU.quotaUsed = 7;
+    },
+    steps: [
+      { uc:'UC14', actor:'SYS', target:null, comp:'monitoring', msg:'사용률 수집 중\nsvr-01: 3% (낮음)', type:'sys', log:'SYS — svr-01 사용률 3% 감지 (임계값 5% 이하 시작)', serverHighlight:'svr-01' },
+      { uc:'UC14', actor:'SYS', target:null, comp:'monitoring', msg:'유휴 타이머 시작\n5% 이하 지속 30분 감시', type:'sys', log:'유휴 감지 타이머 시작 — 30분 동안 5% 이하 유지 시 자동 회수', logType:'warn' },
+      { uc:'UC15', actor:'SYS', target:'STU', comp:'monitoring,notification', msg:'⚠ 경고 알림\n15분 후 자동 회수', type:'warn', log:'최민호에게 유휴 경고 알림 발송 — 15분 이내 활동 없으면 자동 회수 예정',
+        notifyUpdate:{ actor:'STU', delta:1 },
+        toast:{ type:'warn', title:'유휴 경고 (SYS)', msg:'svr-01 사용률이 5% 이하로 30분 지속되었습니다.\n15분 후 자동 회수됩니다.' } },
+      { uc:'UC15', actor:'SYS', target:null, comp:'monitoring', msg:'15분 대기 후\n응답 없음 → 회수 실행', type:'sys', log:'최민호 미응답 15분 경과 — 자동 회수 실행', logType:'warn' },
+      { uc:'UC15', actor:'SYS', target:'STU', comp:'reservation,quota,notification', msg:'자동 회수 완료\nQuota 7 회복', type:'warn', log:'svr-01 자동 회수 — AVAILABLE 복귀 / 최민호 Quota 7 회복',
+        serverUpdate:{ id:'svr-01', status:'AVAILABLE', owner:null, usage:0 },
+        quotaUpdate:{ actor:'STU', used:0 },
+        notifyUpdate:{ actor:'STU', delta:1 },
+        toast:{ type:'warn', title:'자동 회수 완료 (SYS)', msg:'svr-01이 유휴 감지로 자동 회수되었습니다.\nQuota가 회복되었습니다.' } },
+    ]
+  },
+
+  E: {
+    title: '시나리오 E — 예약 만료 자동 반납 (UC16)',
+    desc: '최민호의 svr-01 예약 종료 시각이 도래했습니다. SYS가 자동으로 반납 처리하고 Quota를 회복합니다.',
+    actors: ['STU', 'SYS'],
+    setup(s) {
+      s.servers[0].status = 'IN_USE'; s.servers[0].owner = '최민호 (STU)'; s.servers[0].usage = 55;
+      s.actors.STU.quotaUsed = 7;
+    },
+    steps: [
+      { uc:'UC03-c', actor:'SYS', target:'STU', comp:'monitoring,notification', msg:'만료 1시간 전 알림\n2026-05-21 17:00', type:'sys', log:'SYS — 만료 1시간 전 알림 발송 (18:00 만료 예정)',
+        notifyUpdate:{ actor:'STU', delta:1 },
+        toast:{ type:'info', title:'만료 예고 (SYS)', msg:'svr-01 예약이 1시간 후(18:00) 만료됩니다.\n연장이 필요하면 새 예약을 생성하세요.' } },
+      { uc:'UC16', actor:'SYS', target:null, comp:'monitoring', msg:'예약 종료 시각 도래\n2026-05-21 18:00', type:'sys', log:'SYS — svr-01 예약 종료 시각 2026-05-21 18:00 도래', logType:'info' },
+      { uc:'UC16', actor:'SYS', target:null, comp:'reservation,quota,db', msg:'서버 자동 반납 처리\nAVAILABLE 전환', type:'sys', log:'자동 반납 실행 — svr-01 IN_USE → AVAILABLE',
+        serverUpdate:{ id:'svr-01', status:'AVAILABLE', owner:null, usage:0 },
+        quotaUpdate:{ actor:'STU', used:0 } },
+      { uc:'UC16', actor:'SYS', target:'STU', comp:'notification', msg:'만료 반납 완료 알림\nQuota 7 회복', type:'success', log:'최민호에게 만료 반납 알림 전송 — Quota 7 회복', logType:'success',
+        notifyUpdate:{ actor:'STU', delta:1 },
+        toast:{ type:'info', title:'예약 만료 (SYS)', msg:'svr-01 예약이 만료되어 자동 반납되었습니다.\nQuota가 회복되었습니다.' } },
+    ]
+  },
+
+  F: {
+    title: '시나리오 F — 타임아웃 자동 거절 (UC17)',
+    desc: 'MGR이 최민호의 Quota 초과 요청에 72시간 동안 응답하지 않아 SYS가 자동 거절합니다.',
+    actors: ['STU', 'MGR', 'SYS'],
+    setup(s) { s.actors.STU.quotaUsed = 7; s.actors.MGR.notify = 1; },
+    steps: [
+      { uc:'UC08', actor:'STU', target:'SYS', comp:'approval', msg:'초과 승인 요청 대기 중\n(72시간 타이머 진행)', type:'stu', log:'최민호의 Quota 초과 요청 PENDING 상태 — MGR 응답 대기 중 (72시간 타이머)' },
+      { uc:'UC17', actor:'SYS', target:null, comp:'approval,monitoring', msg:'72시간 경과\nMGR 미응답 감지', type:'sys', log:'SYS — MGR 72시간 무응답 감지. 자동 거절 실행.', logType:'warn' },
+      { uc:'UC17', actor:'SYS', target:'STU', comp:'approval,notification', msg:'⛔ 자동 거절 알림\n72시간 무응답', type:'error', log:'최민호에게 자동 거절 알림 전송', logType:'error',
+        notifyUpdate:{ actor:'STU', delta:1 },
+        notifyUpdate2:{ actor:'MGR', delta:-1 },
+        toast:{ type:'error', title:'자동 거절 (SYS)', msg:'팀 관리자가 72시간 동안 응답하지 않아\n초과 요청이 자동 거절되었습니다.' } },
+      { uc:'UC17', actor:'SYS', target:'MGR', comp:'notification', msg:'자동 거절 처리 통보\nAUTO_REJECTED', type:'sys', log:'MGR에게 자동 거절 통보 — ApprovalRequest AUTO_REJECTED',
+        toast:{ type:'info', title:'자동 거절 통보 (MGR)', msg:'최민호의 초과 요청이 72시간 무응답으로 자동 거절 처리되었습니다.' } },
+      { uc:'UC03-a', actor:'STU', target:null, comp:'notification', msg:'알림 확인\n다시 요청 / 다른 서버', type:'stu', log:'최민호이 거절 알림을 확인하고 다른 서버를 검색합니다.',
+        notifyUpdate:{ actor:'STU', delta:-1 } },
+    ]
+  },
+
+  G: {
+    title: '시나리오 G — 예약 취소 (UC06)',
+    desc: '최민호(STU)이 svr-01 예약을 <strong>시작 전</strong>에 취소합니다. 예약 상태가 CANCELED로 변경되고 Quota가 즉시 회복됩니다.',
+    actors: ['STU', 'SYS'],
+    setup(s) {
+      s.servers[0].status = 'RESERVED'; s.servers[0].owner = '최민호 (STU)'; s.servers[0].usage = 0;
+      s.actors.STU.quotaUsed = 7;
+    },
+    steps: [
+      { uc:'UC02', actor:'STU', target:'SYS', comp:'reservation,db', msg:'내 예약 현황 조회', type:'stu', log:'최민호이 "내 예약" 메뉴를 열어 svr-01 예약을 확인했습니다.' },
+      { uc:'UC06', actor:'STU', target:'SYS', comp:'reservation', msg:'svr-01 예약 취소 요청', type:'stu', log:'최민호이 svr-01 예약 [취소] 버튼을 눌렀습니다.' },
+      { uc:'UC06', actor:'SYS', target:null, comp:'reservation,db', msg:'취소 가능 여부 확인\n(예약 시작 전 ✓)', type:'sys', log:'시스템이 취소 가능 여부를 확인합니다 — 예약 시작 전이므로 취소 가능', logType:'info' },
+      { uc:'UC06', actor:'SYS', target:null, comp:'reservation,quota,db', msg:'예약 취소 처리\nCanceled + Quota 회복', type:'sys', log:'예약 취소 완료 — svr-01 AVAILABLE 복귀 / Quota 7 회복', logType:'success',
+        serverUpdate:{ id:'svr-01', status:'AVAILABLE', owner:null, usage:0 },
+        quotaUpdate:{ actor:'STU', used:0 } },
+      { uc:'UC06', actor:'SYS', target:'STU', comp:'notification', msg:'취소 완료 ✅\nQuota 10 회복', type:'success', log:'최민호에게 취소 완료 알림 전송', logType:'success',
+        toast:{ type:'success', title:'예약 취소 완료', msg:'svr-01 예약이 취소되었습니다.\nQuota가 회복되었습니다.' } },
+    ]
+  },
+
+  H: {
+    title: '시나리오 H — MGR 명시적 거절 (UC09 거절 경로)',
+    desc: '최민호(STU)의 Quota 초과 요청을 팀 관리자(MGR)가 <strong>직접 거절</strong>합니다. 거절 사유가 알림에 포함됩니다.',
+    actors: ['STU', 'MGR', 'SYS'],
+    setup(s) { s.actors.STU.quotaUsed = 7; },
+    steps: [
+      { uc:'UC08', actor:'STU', target:'SYS', comp:'quota,approval', msg:'Quota 초과 요청\nsvr-01 / 10일', type:'stu', log:'최민호이 svr-01 10일 예약 초과 요청을 제출했습니다. (잔여 Quota: 3)' },
+      { uc:'UC08', actor:'SYS', target:'STU', comp:'quota', msg:'❌ Quota 부족 감지\nApprovalRequest 생성', type:'error', log:'Quota 부족 확인 — ApprovalRequest(PENDING) 생성', logType:'error',
+        toast:{ type:'warn', title:'Quota 부족', msg:'잔여 Quota(3)가 부족합니다.\n승인 요청을 발송합니다.' } },
+      { uc:'UC08', actor:'SYS', target:'MGR', comp:'approval,notification', msg:'승인 요청 알림\n최민호 / +7초과', type:'sys', log:'MGR에게 승인 요청 알림 발송 — 최민호 / 10일 / +7 초과',
+        notifyUpdate:{ actor:'MGR', delta:1 } },
+      { uc:'UC09', actor:'MGR', target:'SYS', comp:'approval', msg:'거절 ✗\n사유: "현 할당량 기준 초과"', type:'mgr', log:'팀 관리자가 거절 결정 — 사유: "현 팀 할당량 기준 초과"',
+        notifyUpdate:{ actor:'MGR', delta:-1 } },
+      { uc:'UC09', actor:'SYS', target:null, comp:'approval,db', msg:'ApprovalRequest\n→ REJECTED', type:'sys', log:'ApprovalRequest 상태: PENDING → REJECTED / DB 업데이트', logType:'error' },
+      { uc:'UC03-a', actor:'SYS', target:'STU', comp:'notification', msg:'거절 알림\n사유 + 재요청 링크', type:'error', log:'최민호에게 거절 알림 전송 (사유: 현 팀 할당량 기준 초과)', logType:'error',
+        notifyUpdate:{ actor:'STU', delta:1 },
+        toast:{ type:'error', title:'초과 요청 거절', msg:'팀 관리자가 요청을 거절했습니다.\n사유: 현 팀 할당량 기준 초과\n다른 서버를 탐색하거나 기간을 줄여 재요청하세요.' } },
+    ]
+  },
+
+  I: {
+    title: '시나리오 I — 서버 점검 등록 (UC13)',
+    desc: '서버 관리자(ADM)가 <strong>svr-02</strong>에 점검 스케줄을 등록합니다. 해당 기간 동안 예약이 차단됩니다.',
+    actors: ['ADM', 'SYS'],
+    setup(s) {},
+    steps: [
+      { uc:'UC13', actor:'ADM', target:'SYS', comp:'reservation', msg:'svr-02 점검 등록 요청\n2026-05-20 ~ 05-22', type:'adm', log:'ADM이 svr-02 점검 스케줄 등록 요청 — 2026-05-20 09:00 ~ 2026-05-22 18:00' },
+      { uc:'UC13', actor:'SYS', target:null, comp:'reservation,db', msg:'점검 기간 예약 충돌 확인\nsvr-02 예약 없음 ✓', type:'sys', log:'시스템이 점검 기간 내 기존 예약 충돌 여부를 확인합니다 — 충돌 없음', logType:'info' },
+      { uc:'UC13', actor:'SYS', target:null, comp:'reservation,db', msg:'svr-02 → MAINTENANCE\n해당 기간 예약 차단', type:'sys', log:'svr-02 MAINTENANCE 처리 / 해당 기간 신규 예약 차단 설정 완료', logType:'info',
+        serverUpdate:{ id:'svr-02', status:'MAINTENANCE', owner:null, usage:0 } },
+      { uc:'UC13', actor:'SYS', target:'ADM', comp:'notification', msg:'점검 등록 완료 ✅\n2026-05-20~22', type:'success', log:'ADM에게 점검 등록 완료 알림 전송', logType:'success',
+        toast:{ type:'success', title:'점검 등록 완료', msg:'svr-02 점검 스케줄이 등록되었습니다.\n2026-05-20 ~ 05-22 동안 예약이 차단됩니다.' } },
+    ]
+  },
+
+  J: {
+    title: '시나리오 J — 팀원 Quota 상향 조정 (UC10)',
+    desc: '팀 관리자(MGR)가 최민호(STU)의 개인 Quota를 <strong>10 → 15</strong>로 상향합니다.',
+    actors: ['STU', 'MGR', 'SYS'],
+    setup(s) { s.actors.STU.quotaUsed = 8; },
+    steps: [
+      { uc:'UC10', actor:'MGR', target:'SYS', comp:'quota', msg:'최민호 Quota\n10 → 15 상향 요청', type:'mgr', log:'MGR이 최민호의 개인 Quota를 10 → 15로 상향 요청했습니다.' },
+      { uc:'UC10', actor:'SYS', target:null, comp:'quota,db', msg:'팀 한도 내 유효성 검증\n팀 Quota 30 / 현재 사용 8 ✓', type:'sys', log:'팀 한도 내 유효성 검증 — 팀 Quota 30, 현재 팀 사용량 8 → 변경 가능', logType:'info' },
+      { uc:'UC10', actor:'SYS', target:null, comp:'quota,db', msg:'Quota 업데이트\n최민호: 10 → 15', type:'sys', log:'최민호 개인 Quota 업데이트 완료 — max 10 → 15', logType:'success',
+        quotaMaxUpdate:{ actor:'STU', max:15 } },
+      { uc:'UC10', actor:'SYS', target:'MGR', comp:'notification', msg:'조정 완료 ✅', type:'success', log:'MGR에게 Quota 조정 완료 알림 전송', logType:'success' },
+      { uc:'UC10', actor:'SYS', target:'STU', comp:'notification', msg:'Quota 변경 알림\n10 → 15로 증가', type:'info', log:'최민호에게 Quota 변경 알림 전송 — max 10 → 15',
+        notifyUpdate:{ actor:'STU', delta:1 },
+        toast:{ type:'info', title:'Quota 상향 완료', msg:'개인 Quota가 10 → 15로 증가했습니다.\n추가 할당 가능 기간: +5일' } },
+    ]
+  },
+};
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let state = INITIAL_STATE();
+let currentScen = 'A';
+let stepIndex = -1;
+let simTime = 0;
+
+// ═══════════════════════════════════════════════════════
+// DOM REFS
+// ═══════════════════════════════════════════════════════
+const actorListEl   = document.getElementById('actorList');
+const serverListEl  = document.getElementById('serverList');
+const logEl         = document.getElementById('logEntries');
+const flowDiagram   = document.getElementById('flowDiagram');
+const flowSvg       = document.getElementById('flowSvg');
+const flowActorsEl  = document.getElementById('flowActors');
+const flowMsgsEl    = document.getElementById('flowMsgs');
+const scenDescEl    = document.getElementById('scenDesc');
+const toastContainer= document.getElementById('toastContainer');
+const btnPrev       = document.getElementById('btnPrev');
+const btnNext       = document.getElementById('btnNext');
+const btnReset      = document.getElementById('btnReset');
+const progressFill  = document.getElementById('progressFill');
+const stepIndicator = document.getElementById('stepIndicator');
+document.getElementById('btnClearLog').onclick = () => logEl.innerHTML = '';
+document.querySelectorAll('.scen-btn').forEach(b =>
+  b.addEventListener('click', () => selectScenario(b.dataset.scen))
+);
+btnPrev.addEventListener('click', prevStep);
+btnNext.addEventListener('click', nextStep);
+btnReset.addEventListener('click', resetSim);
+
+// ═══════════════════════════════════════════════════════
+// RENDER ACTORS
+// ═══════════════════════════════════════════════════════
+function renderActors() {
+  const scen = SCENARIOS[currentScen];
+  const visibleActors = scen.actors;
+  actorListEl.innerHTML = '';
+  for (const [code, a] of Object.entries(state.actors)) {
+    if (!visibleActors.includes(code)) continue;
+    const quotaRatio = a.quotaMax ? (a.quotaUsed / a.quotaMax) : null;
+    const fillClass = quotaRatio > 0.8 ? 'critical' : quotaRatio > 0.5 ? 'low' : '';
+    const div = document.createElement('div');
+    div.className = 'actor-card';
+    div.id = `actor-${code}`;
+    div.style.setProperty('--actor-color', a.color);
+    div.innerHTML = `
+      <div class="actor-icon">${a.emoji}</div>
+      <div class="actor-info">
+        <div class="actor-name">${a.name}</div>
+        <div class="actor-role">${a.role}</div>
+        ${a.quotaMax != null ? `
+        <div class="actor-quota">
+          Quota: ${a.quotaUsed} / ${a.quotaMax}
+          <div class="quota-bar"><div class="quota-fill ${fillClass}" style="width:${quotaRatio*100}%"></div></div>
+        </div>` : ''}
+      </div>
+      <div class="actor-notify ${a.notify > 0 ? 'show' : ''}" id="notify-${code}">${a.notify}</div>
+    `;
+    actorListEl.appendChild(div);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER SERVERS
+// ═══════════════════════════════════════════════════════
+function renderServers() {
+  serverListEl.innerHTML = '';
+  for (const srv of state.servers) {
+    const div = document.createElement('div');
+    div.className = 'server-card';
+    div.id = `server-${srv.id}`;
+    div.innerHTML = `
+      <div class="server-top">
+        <div>
+          <div class="server-name">${srv.name}</div>
+          <div class="server-spec">${srv.spec}</div>
+        </div>
+        <span class="status-badge status-${srv.status}">${srv.status}</span>
+      </div>
+      ${srv.owner ? `<div class="server-owner">점유: ${srv.owner}</div>` : '<div class="server-owner" style="color:var(--text-xdim)">미사용</div>'}
+      ${srv.status === 'IN_USE' ? `
+      <div class="server-progress">
+        <div class="server-progress-fill" style="width:${srv.usage}%"></div>
+      </div>
+      <div style="font-size:12px;color:var(--text-dim);margin-top:3px;">CPU 사용률 ${srv.usage}%</div>
+      ` : ''}
+    `;
+    serverListEl.appendChild(div);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// FLOW DIAGRAM
+// ═══════════════════════════════════════════════════════
+const FLOW_POSITIONS = {};
+const COMP_POSITIONS = {};
+
+// component definitions: key → { icon, name, sub, color }
+const COMP_DEFS = {
+  reservation: { icon:'🗓', name:'예약 서비스',     sub:'UC04~07',  color:'var(--accent)' },
+  quota:       { icon:'📊', name:'Quota 관리자',    sub:'UC08~10',  color:'var(--purple)' },
+  approval:    { icon:'✅', name:'승인 서비스',     sub:'UC08~09',  color:'var(--green)' },
+  notification:{ icon:'🔔', name:'알림 서비스',     sub:'UC03',     color:'var(--yellow)' },
+  monitoring:  { icon:'📡', name:'모니터링 에이전트', sub:'UC14~16', color:'var(--cyan)' },
+  db:          { icon:'🗄', name:'DB',              sub:'Reservation·Quota·ApprovalRequest', color:'var(--text-dim)' },
+};
+
+function buildFlowLayout() {
+  flowActorsEl.innerHTML = '';
+  flowSvg.innerHTML = '';
+  const scen = SCENARIOS[currentScen];
+  const rect = flowDiagram.getBoundingClientRect();
+  const W = rect.width || 600;
+  const H = rect.height || 500;
+
+  const actors = scen.actors;
+  const leftX = 10;
+  const actorW = 68;
+  const sysBoxX = leftX + actorW + 14;
+  const sysBoxW = W - sysBoxX - 10;
+  const sysBoxY = 10;
+  const sysBoxH = H - 20;
+
+  // ── System outer box ──────────────────────────────────
+  const sysRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  sysRect.setAttribute('x', sysBoxX); sysRect.setAttribute('y', sysBoxY);
+  sysRect.setAttribute('width', sysBoxW); sysRect.setAttribute('height', sysBoxH);
+  sysRect.setAttribute('rx', '12');
+  sysRect.setAttribute('fill', 'none');
+  sysRect.setAttribute('stroke', 'var(--border)');
+  sysRect.setAttribute('stroke-width', '1.5');
+  sysRect.setAttribute('stroke-dasharray', '8 5');
+  flowSvg.appendChild(sysRect);
+
+  const sysLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  sysLabel.setAttribute('x', sysBoxX + 12); sysLabel.setAttribute('y', sysBoxY + 16);
+  sysLabel.setAttribute('fill', 'var(--text-xdim)');
+  sysLabel.setAttribute('font-size', '12');
+  sysLabel.setAttribute('font-weight', '700');
+  sysLabel.setAttribute('letter-spacing', '0.8');
+  sysLabel.textContent = '서버 예약 시스템';
+  flowSvg.appendChild(sysLabel);
+
+  // ── Component cards (2-column grid inside system box) ─
+  const comps = Object.entries(COMP_DEFS);
+  const cols = 2;
+  const rows = Math.ceil(comps.length / cols);
+  const innerX = sysBoxX + 14;
+  const innerY = sysBoxY + 26;
+  const innerW = sysBoxW - 28;
+  const innerH = sysBoxH - 36;
+  const compW = (innerW - 10) / cols;
+  const compH = (innerH - (rows - 1) * 10) / rows;
+
+  comps.forEach(([key, def], idx) => {
+    const col = idx % cols;
+    const row = Math.floor(idx / cols);
+    const cx = innerX + col * (compW + 10);
+    const cy = innerY + row * (compH + 10);
+    const ccx = cx + compW / 2;
+    const ccy = cy + compH / 2;
+
+    const el = document.createElement('div');
+    el.className = 'comp-card';
+    el.id = `comp-${key}`;
+    el.style.left = cx + 'px';
+    el.style.top = cy + 'px';
+    el.style.width = compW + 'px';
+    el.style.height = compH + 'px';
+    el.style.setProperty('--comp-color', def.color);
+    el.innerHTML = `
+      <div class="comp-card-icon">${def.icon}</div>
+      <div class="comp-card-info">
+        <div class="comp-card-name">${def.name}</div>
+        <div class="comp-card-sub">${def.sub}</div>
+      </div>`;
+    flowActorsEl.appendChild(el);
+    COMP_POSITIONS[key] = { x: ccx, y: ccy };
+  });
+
+  // ── Actor lane lines ──────────────────────────────────
+  const laneYStep = (H - 40) / Math.max(actors.length, 1);
+  actors.forEach((code, i) => {
+    const a = INITIAL_STATE().actors[code];
+    const y = 20 + i * laneYStep + laneYStep / 2;
+
+    const lane = document.createElementNS('http://www.w3.org/2000/svg','line');
+    lane.setAttribute('x1', leftX + actorW - 2); lane.setAttribute('y1', y);
+    lane.setAttribute('x2', sysBoxX); lane.setAttribute('y2', y);
+    lane.setAttribute('stroke', 'var(--border)');
+    lane.setAttribute('stroke-width', '1');
+    lane.setAttribute('stroke-dasharray', '3 3');
+    lane.setAttribute('opacity', '0.35');
+    flowSvg.appendChild(lane);
+
+    const div = document.createElement('div');
+    div.className = 'flow-actor';
+    div.id = `flow-actor-${code}`;
+    div.style.left = leftX + 'px';
+    div.style.top = (y - 30) + 'px';
+    div.style.setProperty('--actor-color', a.color);
+    div.innerHTML = `<div class="flow-actor-icon">${a.emoji}</div><div class="flow-actor-name">${code}</div>`;
+    flowActorsEl.appendChild(div);
+    FLOW_POSITIONS[code] = { x: leftX + actorW / 2, y };
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// ANIMATE ARROW
+// ═══════════════════════════════════════════════════════
+let arrowEls = [];
+function clearArrows() {
+  arrowEls.forEach(e => e.remove());
+  arrowEls = [];
+  flowMsgsEl.innerHTML = '';
+  document.querySelectorAll('.comp-card').forEach(el => el.classList.remove('comp-active'));
+}
+
+function animateArrow(fromCode, toCode, msg, type, comp) {
+  clearArrows();
+  const rect = flowDiagram.getBoundingClientRect();
+  const W = rect.width || 600;
+  const H = rect.height || 500;
+  const actorW = 68;
+  const sysBoxX = 10 + actorW + 14;
+
+  // resolve `from`
+  let from = FLOW_POSITIONS[fromCode];
+  if (!from) {
+    // actor is inside system box — use first comp or center
+    const firstComp = comp ? comp.split(',')[0].trim() : null;
+    from = (firstComp && COMP_POSITIONS[firstComp]) || { x: sysBoxX + (W - sysBoxX) / 2, y: H / 2 };
+  }
+
+  // resolve `to`
+  let to;
+  if (toCode && FLOW_POSITIONS[toCode]) {
+    to = FLOW_POSITIONS[toCode];
+  } else if (comp) {
+    // point to the PRIMARY comp (first in list that has a position)
+    const keys = comp.split(',').map(k => k.trim());
+    to = keys.map(k => COMP_POSITIONS[k]).find(Boolean) || { x: sysBoxX + (W - sysBoxX) / 2, y: H / 2 };
+  } else {
+    to = { x: sysBoxX + (W - sysBoxX) / 2, y: H / 2 };
+  }
+
+  // color by type
+  const colorMap = {
+    stu:'var(--stu-color)', mgr:'var(--mgr-color)',
+    adm:'var(--adm-color)', sys:'var(--sys-color)',
+    success:'var(--green)', error:'var(--red)', warn:'var(--yellow)', info:'var(--cyan)'
+  };
+  const color = colorMap[type] || 'var(--accent)';
+
+  // SVG arrow
+  const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+  const mx = (from.x + to.x)/2;
+  const d = `M${from.x},${from.y} Q${mx},${Math.min(from.y, to.y) - 30} ${to.x},${to.y}`;
+  path.setAttribute('d', d);
+  path.setAttribute('class', 'arrow-path');
+  path.setAttribute('stroke', color);
+
+  // arrowhead
+  const marker = document.createElementNS('http://www.w3.org/2000/svg','marker');
+  const mid = `marker-${Date.now()}`;
+  marker.setAttribute('id', mid);
+  marker.setAttribute('markerWidth','8'); marker.setAttribute('markerHeight','8');
+  marker.setAttribute('refX','6'); marker.setAttribute('refY','3');
+  marker.setAttribute('orient','auto');
+  const mpath = document.createElementNS('http://www.w3.org/2000/svg','path');
+  mpath.setAttribute('d','M0,0 L0,6 L8,3 z');
+  mpath.setAttribute('fill', color);
+  marker.appendChild(mpath);
+  let defs = flowSvg.querySelector('defs');
+  if (!defs) { defs = document.createElementNS('http://www.w3.org/2000/svg','defs'); flowSvg.prepend(defs); }
+  defs.appendChild(marker);
+  path.setAttribute('marker-end', `url(#${mid})`);
+  flowSvg.appendChild(path);
+  arrowEls.push(path);
+
+  // Message label
+  if (msg) {
+    const bubble = document.createElement('div');
+    bubble.className = `msg-bubble msg-${type} visible`;
+    bubble.innerHTML = msg.replace(/\n/g,'<br>');
+    const bx = (from.x + to.x)/2 - 90;
+    const by = Math.min(from.y, to.y) - 60;
+    bubble.style.left = Math.max(4, bx) + 'px';
+    bubble.style.top = Math.max(4, by) + 'px';
+    flowMsgsEl.appendChild(bubble);
+    arrowEls.push(bubble);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// HIGHLIGHT ACTORS
+// ═══════════════════════════════════════════════════════
+function highlightActors(fromCode, toCode) {
+  document.querySelectorAll('.actor-card').forEach(el => el.classList.remove('active-actor'));
+  document.querySelectorAll('.flow-actor').forEach(el => el.classList.remove('active-flow'));
+  [fromCode, toCode].filter(Boolean).forEach(code => {
+    const card = document.getElementById(`actor-${code}`);
+    if (card) card.classList.add('active-actor');
+    const flow = document.getElementById(`flow-actor-${code}`);
+    if (flow) flow.classList.add('active-flow');
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// HIGHLIGHT COMPONENTS
+// ═══════════════════════════════════════════════════════
+function highlightComponents(comp) {
+  document.querySelectorAll('.comp-card').forEach(el => el.classList.remove('comp-active'));
+  if (!comp) return;
+  comp.split(',').map(k => k.trim()).forEach(key => {
+    const el = document.getElementById(`comp-${key}`);
+    if (el) el.classList.add('comp-active');
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// APPLY STEP
+// ═══════════════════════════════════════════════════════
+function applyStep(step) {
+  // server update
+  if (step.serverUpdate) {
+    const srv = state.servers.find(s => s.id === step.serverUpdate.id);
+    if (srv) Object.assign(srv, step.serverUpdate);
+    renderServers();
+    if (step.serverUpdate.id) {
+      const el = document.getElementById(`server-${step.serverUpdate.id}`);
+      if (el) { el.classList.add('pulse'); setTimeout(() => el.classList.remove('pulse'), 2000); }
+    }
+  }
+  if (step.serverHighlight) {
+    const el = document.getElementById(`server-${step.serverHighlight}`);
+    if (el) { el.classList.add('highlight'); setTimeout(() => el.classList.remove('highlight'), 2000); }
+  }
+
+  // quota update
+  if (step.quotaUpdate) {
+    const a = state.actors[step.quotaUpdate.actor];
+    if (a) a.quotaUsed = step.quotaUpdate.used;
+    renderActors();
+  }
+  if (step.quotaMaxUpdate) {
+    const a = state.actors[step.quotaMaxUpdate.actor];
+    if (a) a.quotaMax = step.quotaMaxUpdate.max;
+    renderActors();
+  }
+
+  // notify update
+  [step.notifyUpdate, step.notifyUpdate2].filter(Boolean).forEach(nu => {
+    const a = state.actors[nu.actor];
+    if (a) {
+      a.notify = Math.max(0, (a.notify || 0) + nu.delta);
+      const el = document.getElementById(`notify-${nu.actor}`);
+      if (el) {
+        el.textContent = a.notify;
+        el.classList.toggle('show', a.notify > 0);
+      }
+    }
+  });
+
+  // toast
+  if (step.toast) showToast(step.toast.type, step.toast.title, step.toast.msg);
+
+  // arrow + component highlight
+  animateArrow(step.actor, step.target, step.msg, step.type, step.comp);
+  highlightActors(step.actor, step.target);
+  highlightComponents(step.comp || null);
+
+  // log
+  addLog(step);
+
+  // step indicator
+  const steps = SCENARIOS[currentScen].steps;
+  stepIndicator.textContent = `스텝 ${stepIndex + 1} / ${steps.length}`;
+  progressFill.style.width = `${((stepIndex + 1) / steps.length) * 100}%`;
+  btnPrev.disabled = stepIndex <= 0;
+  btnNext.disabled = stepIndex >= steps.length - 1;
+}
+
+// ═══════════════════════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════════════════════
+function addLog(step) {
+  simTime += 1;
+  const actorClassMap = { STU:'stu', STU2:'stu', MGR:'mgr', ADM:'adm', SYS:'sys' };
+  const cls = actorClassMap[step.actor] || 'system';
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `
+    <span class="log-time">T+${simTime}</span>
+    <span class="log-step ${cls}">${step.actor}</span>
+    <span class="log-msg ${step.logType || ''}">${step.log}</span>
+    <span class="log-uc">${step.uc}</span>
+  `;
+  logEl.appendChild(entry);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+function showToast(type, title, msg) {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<div class="toast-title ${type}">${title}</div>${msg.replace(/\n/g,'<br>')}`;
+  toastContainer.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 400); }, 3000);
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function nextStep() {
+  const steps = SCENARIOS[currentScen].steps;
+  if (stepIndex >= steps.length - 1) return;
+  stepIndex++;
+  applyStep(steps[stepIndex]);
+}
+
+function prevStep() {
+  if (stepIndex <= 0) return;
+  const targetIndex = stepIndex - 1;
+  // reset JS state and replay mutations up to targetIndex
+  resetState();
+  const steps = SCENARIOS[currentScen].steps;
+  for (let i = 0; i <= targetIndex; i++) {
+    const s = steps[i];
+    if (s.serverUpdate) { const srv = state.servers.find(v => v.id === s.serverUpdate.id); if (srv) Object.assign(srv, s.serverUpdate); }
+    if (s.quotaUpdate) { const a = state.actors[s.quotaUpdate.actor]; if (a) a.quotaUsed = s.quotaUpdate.used; }
+    if (s.quotaMaxUpdate) { const a = state.actors[s.quotaMaxUpdate.actor]; if (a) a.quotaMax = s.quotaMaxUpdate.max; }
+    [s.notifyUpdate, s.notifyUpdate2].filter(Boolean).forEach(nu => { const a = state.actors[nu.actor]; if (a) a.notify = Math.max(0, (a.notify || 0) + nu.delta); });
+  }
+  stepIndex = targetIndex;
+  // trim log to matching number of entries
+  const entries = logEl.querySelectorAll('.log-entry');
+  entries.forEach((el, i) => { if (i > stepIndex) el.remove(); });
+  simTime = stepIndex + 1;
+  renderActors(); renderServers();
+  const s = steps[stepIndex];
+  animateArrow(s.actor, s.target, s.msg, s.type, s.comp);
+  highlightActors(s.actor, s.target);
+  highlightComponents(s.comp || null);
+  btnPrev.disabled = stepIndex <= 0;
+  btnNext.disabled = stepIndex >= steps.length - 1;
+  progressFill.style.width = `${((stepIndex + 1) / steps.length) * 100}%`;
+  stepIndicator.textContent = `스텝 ${stepIndex + 1} / ${steps.length}`;
+}
+
+
+// ═══════════════════════════════════════════════════════
+// SCENARIO SELECT
+// ═══════════════════════════════════════════════════════
+function selectScenario(code) {
+  if (currentScen === code && stepIndex >= 0) return;
+  currentScen = code;
+  document.querySelectorAll('.scen-btn').forEach(b => b.classList.toggle('active', b.dataset.scen === code));
+  resetSim();
+}
+
+function resetState() {
+  state = INITIAL_STATE();
+  const scen = SCENARIOS[currentScen];
+  if (scen.setup) scen.setup(state);
+}
+
+function resetSim() {
+  stepIndex = -1;
+  simTime = 0;
+  resetState();
+  renderActors();
+  renderServers();
+  clearArrows();
+  logEl.innerHTML = '';
+  progressFill.style.width = '0%';
+  stepIndicator.textContent = '—';
+  btnPrev.disabled = true;
+  btnNext.disabled = false;
+
+  // scenario description
+  const scen = SCENARIOS[currentScen];
+  scenDescEl.classList.remove('hidden');
+  scenDescEl.innerHTML = `<strong>${scen.title}</strong><br><span>${scen.desc}</span>`;
+
+  // rebuild flow layout after DOM settle
+  requestAnimationFrame(() => { buildFlowLayout(); });
+}
+
+// ═══════════════════════════════════════════════════════
+// RESIZE — rebuild arrows
+// ═══════════════════════════════════════════════════════
+const ro = new ResizeObserver(() => {
+  buildFlowLayout();
+  clearArrows();
+});
+ro.observe(flowDiagram);
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+resetSim();
+</script>
+</body>
+</html>
