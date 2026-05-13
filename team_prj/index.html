@@ -708,6 +708,10 @@ header .subtitle { font-size: 12px; color: var(--text-dim); }
   <button class="scen-btn" data-scen="H">H. MGR 명시적 거절</button>
   <button class="scen-btn" data-scen="I">I. 서버 점검 등록</button>
   <button class="scen-btn" data-scen="J">J. Quota 상향 조정</button>
+  <button class="scen-btn" data-scen="K">K. 이상 징후 탐지</button>
+  <button class="scen-btn" data-scen="L">L. 건강 점수 산출</button>
+  <button class="scen-btn" data-scen="M">M. 비정상 접근 잠금</button>
+  <button class="scen-btn" data-scen="N">N. 운영 대시보드</button>
 </div>
 
 <div class="controls">
@@ -817,8 +821,8 @@ const SCENARIOS = {
       { uc:'UC04', actor:'STU', target:'SYS', comp:'reservation', msg:'예약 요청\nsvr-01 / 10일', type:'stu', log:'최민호이 svr-01 10일 예약을 시도했습니다. (현재 Quota 잔여: 3)' },
       { uc:'UC04', actor:'SYS', target:'STU', comp:'quota', msg:'❌ Quota 부족\n잔여 3 < 요청 10', type:'error', log:'Quota 부족 — 잔여 3, 요청 10, 초과량 7', logType:'error',
         toast:{ type:'warn', title:'Quota 부족', msg:'잔여 Quota(3)가 부족합니다.\n초과 승인을 요청하시겠습니까?' } },
-      { uc:'UC08', actor:'STU', target:'SYS', comp:'approval,quota', msg:'초과 승인 요청\nApprovalRequest 생성', type:'stu', log:'최민호이 [승인 요청] 버튼을 눌렀습니다. ApprovalRequest 생성.' },
-      { uc:'UC08', actor:'SYS', target:'MGR', comp:'approval,notification', msg:'승인 요청 알림 발송\n최민호 / 10일 / +7 초과', type:'sys', log:'MGR에게 승인 요청 알림이 발송되었습니다.',
+      { uc:'UC04-A1', actor:'STU', target:'SYS', comp:'approval,quota', msg:'초과 승인 요청\nApprovalRequest 생성', type:'stu', log:'최민호이 [승인 요청] 버튼을 눌렀습니다. ApprovalRequest 생성.' },
+      { uc:'UC04-A1', actor:'SYS', target:'MGR', comp:'approval,notification', msg:'승인 요청 알림 발송\n최민호 / 10일 / +7 초과', type:'sys', log:'MGR에게 승인 요청 알림이 발송되었습니다.',
         notifyUpdate:{ actor:'MGR', delta:1 } },
       { uc:'UC09', actor:'MGR', target:'SYS', comp:'approval', msg:'승인 ✅\n(초과 허용)', type:'mgr', log:'팀 관리자가 최민호의 초과 요청을 승인했습니다.',
         notifyUpdate:{ actor:'MGR', delta:-1 } },
@@ -889,7 +893,7 @@ const SCENARIOS = {
       s.actors.STU.quotaUsed = 7;
     },
     steps: [
-      { uc:'UC03-c', actor:'SYS', target:'STU', comp:'monitoring,notification', msg:'만료 1시간 전 알림\n2026-05-21 17:00', type:'sys', log:'SYS — 만료 1시간 전 알림 발송 (18:00 만료 예정)',
+      { uc:'UC16', actor:'SYS', target:'STU', comp:'monitoring,notification', msg:'만료 1시간 전 알림\n2026-05-21 17:00', type:'sys', log:'SYS — 만료 1시간 전 알림 발송 (18:00 만료 예정)',
         notifyUpdate:{ actor:'STU', delta:1 },
         toast:{ type:'info', title:'만료 예고 (SYS)', msg:'svr-01 예약이 1시간 후(18:00) 만료됩니다.\n연장이 필요하면 새 예약을 생성하세요.' } },
       { uc:'UC16', actor:'SYS', target:null, comp:'monitoring', msg:'예약 종료 시각 도래\n2026-05-21 18:00', type:'sys', log:'SYS — svr-01 예약 종료 시각 2026-05-21 18:00 도래', logType:'info' },
@@ -908,7 +912,7 @@ const SCENARIOS = {
     actors: ['STU', 'MGR', 'SYS'],
     setup(s) { s.actors.STU.quotaUsed = 7; s.actors.MGR.notify = 1; },
     steps: [
-      { uc:'UC08', actor:'STU', target:'SYS', comp:'approval', msg:'초과 승인 요청 대기 중\n(72시간 타이머 진행)', type:'stu', log:'최민호의 Quota 초과 요청 PENDING 상태 — MGR 응답 대기 중 (72시간 타이머)' },
+      { uc:'UC04-A1', actor:'STU', target:'SYS', comp:'approval', msg:'초과 승인 요청 대기 중\n(72시간 타이머 진행)', type:'stu', log:'최민호의 Quota 초과 요청 PENDING 상태 — MGR 응답 대기 중 (72시간 타이머)' },
       { uc:'UC17', actor:'SYS', target:null, comp:'approval,monitoring', msg:'72시간 경과\nMGR 미응답 감지', type:'sys', log:'SYS — MGR 72시간 무응답 감지. 자동 거절 실행.', logType:'warn' },
       { uc:'UC17', actor:'SYS', target:'STU', comp:'approval,notification', msg:'⛔ 자동 거절 알림\n72시간 무응답', type:'error', log:'최민호에게 자동 거절 알림 전송', logType:'error',
         notifyUpdate:{ actor:'STU', delta:1 },
@@ -947,10 +951,10 @@ const SCENARIOS = {
     actors: ['STU', 'MGR', 'SYS'],
     setup(s) { s.actors.STU.quotaUsed = 7; },
     steps: [
-      { uc:'UC08', actor:'STU', target:'SYS', comp:'quota,approval', msg:'Quota 초과 요청\nsvr-01 / 10일', type:'stu', log:'최민호이 svr-01 10일 예약 초과 요청을 제출했습니다. (잔여 Quota: 3)' },
-      { uc:'UC08', actor:'SYS', target:'STU', comp:'quota', msg:'❌ Quota 부족 감지\nApprovalRequest 생성', type:'error', log:'Quota 부족 확인 — ApprovalRequest(PENDING) 생성', logType:'error',
+      { uc:'UC04-A1', actor:'STU', target:'SYS', comp:'quota,approval', msg:'Quota 초과 요청\nsvr-01 / 10일', type:'stu', log:'최민호이 svr-01 10일 예약 초과 요청을 제출했습니다. (잔여 Quota: 3)' },
+      { uc:'UC04-A1', actor:'SYS', target:'STU', comp:'quota', msg:'❌ Quota 부족 감지\nApprovalRequest 생성', type:'error', log:'Quota 부족 확인 — ApprovalRequest(PENDING) 생성', logType:'error',
         toast:{ type:'warn', title:'Quota 부족', msg:'잔여 Quota(3)가 부족합니다.\n승인 요청을 발송합니다.' } },
-      { uc:'UC08', actor:'SYS', target:'MGR', comp:'approval,notification', msg:'승인 요청 알림\n최민호 / +7초과', type:'sys', log:'MGR에게 승인 요청 알림 발송 — 최민호 / 10일 / +7 초과',
+      { uc:'UC04-A1', actor:'SYS', target:'MGR', comp:'approval,notification', msg:'승인 요청 알림\n최민호 / +7초과', type:'sys', log:'MGR에게 승인 요청 알림 발송 — 최민호 / 10일 / +7 초과',
         notifyUpdate:{ actor:'MGR', delta:1 } },
       { uc:'UC09', actor:'MGR', target:'SYS', comp:'approval', msg:'거절 ✗\n사유: "현 할당량 기준 초과"', type:'mgr', log:'팀 관리자가 거절 결정 — 사유: "현 팀 할당량 기준 초과"',
         notifyUpdate:{ actor:'MGR', delta:-1 } },
@@ -990,6 +994,77 @@ const SCENARIOS = {
       { uc:'UC10', actor:'SYS', target:'STU', comp:'notification', msg:'Quota 변경 알림\n10 → 15로 증가', type:'info', log:'최민호에게 Quota 변경 알림 전송 — max 10 → 15',
         notifyUpdate:{ actor:'STU', delta:1 },
         toast:{ type:'info', title:'Quota 상향 완료', msg:'개인 Quota가 10 → 15로 증가했습니다.\n추가 할당 가능 기간: +5일' } },
+    ]
+  },
+
+  K: {
+    title: '시나리오 K — 서버 이상 징후 탐지 (UC18)',
+    desc: '모니터링 시스템(SYS)이 <strong>svr-01</strong>의 CPU 사용률이 평상시 패턴(μ ± 2σ)을 크게 벗어남을 감지하고 ADM에게 경고합니다.',
+    actors: ['ADM', 'SYS'],
+    setup(s) {
+      s.servers[0].status = 'IN_USE'; s.servers[0].owner = '최민호 (STU)'; s.servers[0].usage = 98;
+    },
+    steps: [
+      { uc:'UC14', actor:'SYS', target:null, comp:'monitoring', msg:'사용률 수집\nsvr-01: 98% (급등)', type:'sys', log:'SYS — svr-01 CPU 98% 수집', serverHighlight:'svr-01' },
+      { uc:'UC18', actor:'SYS', target:null, comp:'monitoring', msg:'7일 이동 평균 계산\nμ=45%, σ=8%', type:'sys', log:'UC18 — svr-01 7일 μ=45%, σ=8% 계산', logType:'info' },
+      { uc:'UC18', actor:'SYS', target:null, comp:'monitoring', msg:'이상 판정\n98% > μ+2σ(61%) ⚠', type:'warn', log:'이상 징후 판정 — 현재 98% > μ+2σ 61% (편차: +6.6σ)', logType:'warn' },
+      { uc:'UC18', actor:'SYS', target:'ADM', comp:'monitoring,notification', msg:'이상 징후 알림\nsvr-01 · +6.6σ', type:'warn', log:'ADM에게 이상 징후 알림 발송 — svr-01 / 편차 +6.6σ / 98%',
+        notifyUpdate:{ actor:'ADM', delta:1 },
+        toast:{ type:'warn', title:'이상 징후 감지 (UC18)', msg:'svr-01 CPU 사용률이 정상 범위를 벗어났습니다.\n현재: 98%  평균(μ): 45%  2σ 상한: 61%' } },
+      { uc:'UC18', actor:'SYS', target:null, comp:'monitoring,db', msg:'이상 이력 저장\nAnomalyRecord 생성', type:'sys', log:'AnomalyRecord 생성 — svr-01 / detectedAt: now / deviation: +6.6σ', logType:'info' },
+    ]
+  },
+
+  L: {
+    title: '시나리오 L — 서버 건강 점수 산출 (UC19)',
+    desc: '모니터링 시스템(SYS)이 <strong>svr-03</strong>의 지표를 종합해 건강 점수를 계산합니다. CPU 90% · 누락 5회 · 이상 4회 → 32점(위험)으로 ADM에게 점검 권고 알림이 발송됩니다.',
+    actors: ['ADM', 'SYS'],
+    setup(s) {
+      s.servers[2].status = 'IN_USE'; s.servers[2].owner = '조동화 (STU2)'; s.servers[2].usage = 90;
+    },
+    steps: [
+      { uc:'UC19', actor:'SYS', target:null, comp:'monitoring', msg:'건강 점수 산출 시작\nsvr-03 (10분 주기)', type:'sys', log:'UC19 — svr-03 건강 점수 산출 시작 (10분 주기)', logType:'info', serverHighlight:'svr-03' },
+      { uc:'UC19', actor:'SYS', target:null, comp:'monitoring', msg:'① 사용률 패널티\nCPU 90% → P_usage=(90-60)×2.5=75', type:'sys', log:'사용률 패널티: u=90% → P_usage = clamp((90-60)×2.5, 0,100) = 75', logType:'info' },
+      { uc:'UC19', actor:'SYS', target:null, comp:'monitoring,db', msg:'② 누락 패널티\n24h MISSING 5회 → P_missing=5×10=50', type:'sys', log:'누락 패널티: 24h MISSING 5회(metric_log 집계) → P_missing = min(5×10,100) = 50', logType:'info' },
+      { uc:'UC19', actor:'SYS', target:null, comp:'monitoring,db', msg:'③ 이상 징후 패널티\n7일 유효 이상 4건 → P_anomaly=4×20=80', type:'sys', log:'이상 징후 패널티: 7일 AnomalyRecord 4건(30분 dedup) → P_anomaly = min(4×20,100) = 80', logType:'info' },
+      { uc:'UC19', actor:'SYS', target:null, comp:'monitoring,db', msg:'④ 건강 점수 산출\n100-(75×.5+50×.3+80×.2)\n=100-68.5=32점 ⚠', type:'warn', log:'score = round(100-(75×0.5+50×0.3+80×0.2)) = round(100-68.5) = 32점 → 위험', logType:'warn' },
+      { uc:'UC19', actor:'SYS', target:'ADM', comp:'monitoring,notification', msg:'점검 권고 알림\nsvr-03 · 32점 (위험)', type:'warn', log:'ADM에게 점검 권고 알림 발송 — svr-03 건강 점수 32점 (위험)',
+        notifyUpdate:{ actor:'ADM', delta:1 },
+        toast:{ type:'warn', title:'점검 권고 (UC19)', msg:'svr-03 건강 점수: 32점 (위험)\nP_usage 75 · P_missing 50 · P_anomaly 80\n점검 상태 전환을 권고합니다.' } },
+    ]
+  },
+
+  M: {
+    title: '시나리오 M — 비정상 접근 감지 및 일시 잠금 (UC20)',
+    desc: '최민호(STU)가 1분 내 예약 요청을 10회 초과 반복합니다. SYS가 비정상 접근으로 감지하고 15분 일시 잠금 처리합니다.',
+    actors: ['STU', 'ADM', 'SYS'],
+    setup(s) { s.actors.STU.quotaUsed = 0; },
+    steps: [
+      { uc:'UC04', actor:'STU', target:'SYS', comp:'reservation', msg:'예약 요청 반복\n(1분 내 11회)', type:'stu', log:'최민호 — 1분 내 예약·취소 요청 11회 감지 시작' },
+      { uc:'UC20', actor:'SYS', target:null, comp:'security,monitoring', msg:'슬라이딩 윈도우 집계\n1분 내 요청 11회 감지', type:'sys', log:'UC20 — 최민호 요청 카운터: 11회 > RATE_LIMIT_REQUEST(10회)', logType:'warn' },
+      { uc:'UC20', actor:'SYS', target:'STU', comp:'security', msg:'⛔ 계정 일시 잠금\nlockedUntil = now+15m', type:'error', log:'비정상 접근 판정 — 최민호 계정 15분 잠금 처리', logType:'error',
+        toast:{ type:'error', title:'계정 일시 잠금 (UC20)', msg:'비정상 접근이 감지되어 계정이 15분간 잠금됩니다.\n자동 해제: 15분 후 · 문의: 서버 관리자' } },
+      { uc:'UC20', actor:'SYS', target:'ADM', comp:'security,notification', msg:'비정상 접근 알림\n최민호 · 11회/분', type:'warn', log:'ADM에게 비정상 접근 감지 알림 발송 — 최민호 / 11회/분 / 잠금 적용',
+        notifyUpdate:{ actor:'ADM', delta:1 },
+        toast:{ type:'warn', title:'비정상 접근 감지 (ADM)', msg:'계정: 최민호\n패턴: 1분 내 예약 요청 11회\n조치: 15분 일시 잠금 적용' } },
+      { uc:'UC20', actor:'STU', target:'SYS', comp:'security', msg:'잠금 중 재요청\n→ 429 Too Many Requests', type:'error', log:'최민호 재요청 → 429 거부 (남은 잠금: 12분)', logType:'error',
+        toast:{ type:'error', title:'요청 거부 (429)', msg:'계정이 잠금 상태입니다.\n자동 해제까지 약 12분 남았습니다.' } },
+    ]
+  },
+
+  N: {
+    title: '시나리오 N — 시스템 운영 대시보드 (UC21)',
+    desc: '서버 관리자(ADM)가 시스템 운영 대시보드를 열어 스케줄러 상태·메트릭 수집 현황·건강 점수 요약을 한눈에 확인합니다.',
+    actors: ['ADM', 'SYS'],
+    setup(s) {},
+    steps: [
+      { uc:'UC21', actor:'ADM', target:'SYS', comp:'dashboard,db', msg:'시스템 운영 메뉴 열기\n대시보드 조회', type:'adm', log:'ADM이 "시스템 운영" 메뉴를 열었습니다.' },
+      { uc:'UC21', actor:'SYS', target:'ADM', comp:'dashboard,monitoring', msg:'① 스케줄러 상태\nUC14~UC19 모두 정상 ✓', type:'sys', log:'스케줄러: UC14 ✓ / UC15 ✓ / UC16 ✓ / UC17 ✓ / UC18 ✓ / UC19 ✓', logType:'info' },
+      { uc:'UC21', actor:'SYS', target:'ADM', comp:'dashboard,monitoring', msg:'② 메트릭 수집 현황\n성공률 94% · MISSING: svr-03', type:'warn', log:'메트릭 수집: 성공률 94% / svr-03 최근 6회 응답 없음', logType:'warn',
+        serverHighlight:'svr-03' },
+      { uc:'UC21', actor:'SYS', target:'ADM', comp:'dashboard,db', msg:'③ 자동 처리 내역\n회수 2건·만료 1건·거절 0건', type:'sys', log:'24h 자동 처리: 유휴 회수 2건 / 만료 반납 1건 / 타임아웃 거절 0건', logType:'info' },
+      { uc:'UC21', actor:'SYS', target:'ADM', comp:'dashboard,monitoring', msg:'④ 건강 점수 요약\n정상 1 · 주의 1 · 위험 1', type:'warn', log:'건강 점수 분포: 정상(≥70) 1대 / 주의(40~69) 1대 / 위험(<40) 1대',
+        toast:{ type:'warn', title:'대시보드 로드 완료 (UC21)', msg:'스케줄러: 전체 정상 ✓\n메트릭: svr-03 MISSING 경고 ⚠\n위험 서버: 1대 (건강 점수 <40)' } },
     ]
   },
 };
@@ -1097,10 +1172,12 @@ const COMP_POSITIONS = {};
 // component definitions: key → { icon, name, sub, color }
 const COMP_DEFS = {
   reservation: { icon:'🗓', name:'예약 서비스',     sub:'UC04~07',  color:'var(--accent)' },
-  quota:       { icon:'📊', name:'Quota 관리자',    sub:'UC08~10',  color:'var(--purple)' },
-  approval:    { icon:'✅', name:'승인 서비스',     sub:'UC08~09',  color:'var(--green)' },
+  quota:       { icon:'📊', name:'Quota 관리자',    sub:'UC09~10',  color:'var(--purple)' },
+  approval:    { icon:'✅', name:'승인 서비스',     sub:'UC09',     color:'var(--green)' },
   notification:{ icon:'🔔', name:'알림 서비스',     sub:'UC03',     color:'var(--yellow)' },
-  monitoring:  { icon:'📡', name:'모니터링 에이전트', sub:'UC14~16', color:'var(--cyan)' },
+  monitoring:  { icon:'📡', name:'모니터링 에이전트', sub:'UC14~19', color:'var(--cyan)' },
+  security:    { icon:'🔒', name:'보안 서비스',     sub:'UC20',     color:'var(--red)' },
+  dashboard:   { icon:'🖥', name:'운영 대시보드',   sub:'UC21',     color:'var(--text-dim)' },
   db:          { icon:'🗄', name:'DB',              sub:'Reservation·Quota·ApprovalRequest', color:'var(--text-dim)' },
 };
 
