@@ -1,0 +1,272 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="usecase-server-reservation" name="유스케이스 다이어그램">
+    <mxGraphModel dx="2400" dy="1600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- 타이틀 -->
+        <mxCell id="title" value="서버 예약/할당 관리 시스템 — 유스케이스 다이어그램" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=20;fontStyle=1;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="600" y="10" width="1000" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- 시스템 경계 -->
+        <mxCell id="sys" value="서버 예약/할당 관리 시스템" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=15;fontStyle=1;fontColor=#000000;fillColor=#fafafa;strokeColor=#222222;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="260" y="60" width="1680" height="1380" as="geometry" />
+        </mxCell>
+
+        <!-- =========================================================== -->
+        <!-- 액터 -->
+        <!-- =========================================================== -->
+        <mxCell id="a_stu" value="학생 / 연구원&#xa;(STU)" style="shape=mxgraph.flowchart.actor;fillColor=#ffd966;strokeColor=#a37f12;fontSize=12;fontStyle=1;fontColor=#000000;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="380" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="a_mgr" value="팀 관리자 / 교수&#xa;(MGR)" style="shape=mxgraph.flowchart.actor;fillColor=#9ec5f8;strokeColor=#3a64a3;fontSize=12;fontStyle=1;fontColor=#000000;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="800" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="a_adm" value="서버 관리자&#xa;(ADM)" style="shape=mxgraph.flowchart.actor;fillColor=#c9a5d9;strokeColor=#5e3a73;fontSize=12;fontStyle=1;fontColor=#000000;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="2060" y="380" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="a_sys" value="모니터링 시스템&#xa;«system»&#xa;(SYS)" style="shape=mxgraph.flowchart.actor;fillColor=#a8d49b;strokeColor=#3f7a31;fontSize=12;fontStyle=1;fontColor=#000000;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="2060" y="1080" width="60" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- =========================================================== -->
+        <!-- G-조회 (회색 톤 ↑) -->
+        <!-- =========================================================== -->
+        <mxCell id="uc01" value="UC01&#xa;서버 현황 조회" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d9d9d9;strokeColor=#3f3f3f;strokeWidth=1.5;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="340" y="120" width="170" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="uc02" value="UC02&#xa;예약 현황 조회" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d9d9d9;strokeColor=#3f3f3f;strokeWidth=1.5;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="540" y="120" width="170" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- =========================================================== -->
+        <!-- G-알림 (노랑 톤 ↑) — 일반화 트리 -->
+        <!-- =========================================================== -->
+        <mxCell id="uc03" value="UC03&#xa;알림 수신" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffd966;strokeColor=#a37f12;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1520" y="120" width="170" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="uc03a" value="UC03-a&#xa;예약 승인/거절&#xa;알림 수신" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe599;strokeColor=#a37f12;strokeWidth=1.5;fontSize=11;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="280" width="170" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="uc03b" value="UC03-b&#xa;유휴 회수 경고&#xa;알림 수신" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe599;strokeColor=#a37f12;strokeWidth=1.5;fontSize=11;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1400" y="280" width="170" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="uc03c" value="UC03-c&#xa;예약 만료&#xa;알림 수신" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe599;strokeColor=#a37f12;strokeWidth=1.5;fontSize=11;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1600" y="280" width="170" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="uc03d" value="UC03-d&#xa;예약 충돌&#xa;알림 수신" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe599;strokeColor=#a37f12;strokeWidth=1.5;fontSize=11;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1800" y="280" width="170" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- =========================================================== -->
+        <!-- G-예약 (파랑 톤 ↑) -->
+        <!-- =========================================================== -->
+        <mxCell id="uc04" value="UC04&#xa;서버 예약 요청&#xa;(예약형) ⭐" style="ellipse;whiteSpace=wrap;html=1;fillColor=#9ec5f8;strokeColor=#1f4e8c;strokeWidth=2;fontSize=12;fontStyle=1;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="360" y="430" width="190" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="uc05" value="UC05&#xa;즉시 서버 요청" style="ellipse;whiteSpace=wrap;html=1;fillColor=#b8d4f5;strokeColor=#1f4e8c;strokeWidth=1.5;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="360" y="535" width="190" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="uc06" value="UC06&#xa;예약 취소" style="ellipse;whiteSpace=wrap;html=1;fillColor=#b8d4f5;strokeColor=#1f4e8c;strokeWidth=1.5;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="360" y="625" width="190" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="uc07" value="UC07&#xa;서버 반납" style="ellipse;whiteSpace=wrap;html=1;fillColor=#b8d4f5;strokeColor=#1f4e8c;strokeWidth=1.5;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="360" y="715" width="190" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- =========================================================== -->
+        <!-- G-승인 (주황 톤 ↑) -->
+        <!-- =========================================================== -->
+        <mxCell id="uc08" value="UC08&#xa;Quota 초과 요청" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffcc99;strokeColor=#a35a00;strokeWidth=1.5;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="850" y="460" width="190" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="uc09" value="UC09&#xa;초과 요청&#xa;승인/거절 ⭐" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffb366;strokeColor=#a35a00;strokeWidth=2;fontSize=12;fontStyle=1;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="850" y="560" width="190" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="uc10" value="UC10&#xa;팀원별 Quota 설정" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffcc99;strokeColor=#a35a00;strokeWidth=1.5;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="850" y="670" width="190" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- =========================================================== -->
+        <!-- G-관리 (보라 톤 ↑) -->
+        <!-- =========================================================== -->
+        <mxCell id="uc11" value="UC11&#xa;서버 등록" style="ellipse;whiteSpace=wrap;html=1;fillColor=#c9a5d9;strokeColor=#5e3a73;strokeWidth=1.5;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1500" y="460" width="190" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="uc12" value="UC12&#xa;서버 삭제" style="ellipse;whiteSpace=wrap;html=1;fillColor=#c9a5d9;strokeColor=#5e3a73;strokeWidth=1.5;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1500" y="550" width="190" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="uc13" value="UC13&#xa;서버 점검 스케줄 등록" style="ellipse;whiteSpace=wrap;html=1;fillColor=#c9a5d9;strokeColor=#5e3a73;strokeWidth=1.5;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1500" y="640" width="190" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- =========================================================== -->
+        <!-- G-자동 (녹색 톤 ↑) -->
+        <!-- =========================================================== -->
+        <mxCell id="uc14" value="UC14&#xa;실시간 사용률 수집" style="ellipse;whiteSpace=wrap;html=1;fillColor=#a8d49b;strokeColor=#2e5e25;strokeWidth=1.5;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="940" width="210" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="uc15" value="UC15&#xa;유휴 서버 감지 및&#xa;자동 회수" style="ellipse;whiteSpace=wrap;html=1;fillColor=#a8d49b;strokeColor=#2e5e25;strokeWidth=1.5;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="1030" width="210" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="uc16" value="UC16&#xa;예약 만료&#xa;자동 반납" style="ellipse;whiteSpace=wrap;html=1;fillColor=#a8d49b;strokeColor=#2e5e25;strokeWidth=1.5;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="1130" width="210" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="uc17" value="UC17&#xa;승인 타임아웃&#xa;자동 거절 (72h)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#a8d49b;strokeColor=#2e5e25;strokeWidth=1.5;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="1230" width="210" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- =========================================================== -->
+        <!-- 액터-UC 연결 (association: 실선) -->
+        <!-- =========================================================== -->
+
+        <!-- STU -->
+        <mxCell id="e_stu_uc01" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#444444;strokeWidth=1.2;" edge="1" parent="1" source="a_stu" target="uc01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_stu_uc02" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#444444;strokeWidth=1.2;" edge="1" parent="1" source="a_stu" target="uc02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_stu_uc04" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=2.5;" edge="1" parent="1" source="a_stu" target="uc04">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_stu_uc05" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=1.5;" edge="1" parent="1" source="a_stu" target="uc05">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_stu_uc06" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=1.5;" edge="1" parent="1" source="a_stu" target="uc06">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_stu_uc07" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=1.5;" edge="1" parent="1" source="a_stu" target="uc07">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_stu_uc08" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=1.5;" edge="1" parent="1" source="a_stu" target="uc08">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_stu_uc03" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=1.5;" edge="1" parent="1" source="a_stu" target="uc03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- MGR -->
+        <mxCell id="e_mgr_uc01" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#444444;strokeWidth=1.2;" edge="1" parent="1" source="a_mgr" target="uc01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mgr_uc02" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#444444;strokeWidth=1.2;" edge="1" parent="1" source="a_mgr" target="uc02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mgr_uc09" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=2.5;" edge="1" parent="1" source="a_mgr" target="uc09">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mgr_uc10" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=1.5;" edge="1" parent="1" source="a_mgr" target="uc10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mgr_uc03" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#444444;strokeWidth=1.2;" edge="1" parent="1" source="a_mgr" target="uc03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ADM -->
+        <mxCell id="e_adm_uc01" style="endArrow=none;edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#444444;strokeWidth=1.2;" edge="1" parent="1" source="a_adm" target="uc01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_adm_uc02" style="endArrow=none;edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#444444;strokeWidth=1.2;" edge="1" parent="1" source="a_adm" target="uc02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_adm_uc11" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=1.5;" edge="1" parent="1" source="a_adm" target="uc11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_adm_uc12" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=1.5;" edge="1" parent="1" source="a_adm" target="uc12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_adm_uc13" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=1.5;" edge="1" parent="1" source="a_adm" target="uc13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- SYS -->
+        <mxCell id="e_sys_uc14" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=1.5;" edge="1" parent="1" source="a_sys" target="uc14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sys_uc15" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=1.5;" edge="1" parent="1" source="a_sys" target="uc15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sys_uc16" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=1.5;" edge="1" parent="1" source="a_sys" target="uc16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sys_uc17" style="endArrow=none;edgeStyle=none;rounded=0;strokeColor=#000000;strokeWidth=1.5;" edge="1" parent="1" source="a_sys" target="uc17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- =========================================================== -->
+        <!-- generalization (UC03 → UC03-a/b/c/d) -->
+        <!-- =========================================================== -->
+        <mxCell id="g_uc03_a" style="endArrow=block;endFill=0;endSize=14;edgeStyle=none;rounded=0;strokeColor=#7a5c00;strokeWidth=1.8;" edge="1" parent="1" source="uc03a" target="uc03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="g_uc03_b" style="endArrow=block;endFill=0;endSize=14;edgeStyle=none;rounded=0;strokeColor=#7a5c00;strokeWidth=1.8;" edge="1" parent="1" source="uc03b" target="uc03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="g_uc03_c" style="endArrow=block;endFill=0;endSize=14;edgeStyle=none;rounded=0;strokeColor=#7a5c00;strokeWidth=1.8;" edge="1" parent="1" source="uc03c" target="uc03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="g_uc03_d" style="endArrow=block;endFill=0;endSize=14;edgeStyle=none;rounded=0;strokeColor=#7a5c00;strokeWidth=1.8;" edge="1" parent="1" source="uc03d" target="uc03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- =========================================================== -->
+        <!-- include (점선, 라벨에 흰 배경) -->
+        <!-- =========================================================== -->
+        <mxCell id="i_08_09" value="«include»" style="endArrow=open;endFill=0;endSize=12;dashed=1;edgeStyle=none;strokeColor=#a35a00;strokeWidth=1.8;fontSize=11;fontStyle=2;fontColor=#7a3d00;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="uc08" target="uc09">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i_09_03a" value="«include»" style="endArrow=open;endFill=0;endSize=12;dashed=1;edgeStyle=none;strokeColor=#a35a00;strokeWidth=1.8;fontSize=11;fontStyle=2;fontColor=#7a3d00;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="uc09" target="uc03a">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i_15_03b" value="«include»" style="endArrow=open;endFill=0;endSize=12;dashed=1;edgeStyle=none;strokeColor=#2e5e25;strokeWidth=1.8;fontSize=11;fontStyle=2;fontColor=#1f4719;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="uc15" target="uc03b">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i_16_03c" value="«include»" style="endArrow=open;endFill=0;endSize=12;dashed=1;edgeStyle=none;strokeColor=#2e5e25;strokeWidth=1.8;fontSize=11;fontStyle=2;fontColor=#1f4719;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="uc16" target="uc03c">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i_17_03a" value="«include»" style="endArrow=open;endFill=0;endSize=12;dashed=1;edgeStyle=none;strokeColor=#2e5e25;strokeWidth=1.8;fontSize=11;fontStyle=2;fontColor=#1f4719;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="uc17" target="uc03a">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- =========================================================== -->
+        <!-- extend (점선, 라벨에 흰 배경) -->
+        <!-- =========================================================== -->
+        <mxCell id="x_08_04" value="«extend»&#xa;[Quota 초과 시]" style="endArrow=open;endFill=0;endSize=12;dashed=1;edgeStyle=none;strokeColor=#003d99;strokeWidth=1.8;fontSize=11;fontStyle=2;fontColor=#002966;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="uc08" target="uc04">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="x_08_05" value="«extend»&#xa;[Quota 초과 시]" style="endArrow=open;endFill=0;endSize=12;dashed=1;edgeStyle=none;strokeColor=#003d99;strokeWidth=1.8;fontSize=11;fontStyle=2;fontColor=#002966;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="uc08" target="uc05">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="x_03d_04" value="«extend»&#xa;[동시 충돌 시]" style="endArrow=open;endFill=0;endSize=12;dashed=1;edgeStyle=none;strokeColor=#003d99;strokeWidth=1.8;fontSize=11;fontStyle=2;fontColor=#002966;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="uc03d" target="uc04">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- =========================================================== -->
+        <!-- 범례 -->
+        <!-- =========================================================== -->
+        <mxCell id="legend_box" value="범례" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=13;fontStyle=1;fontColor=#000000;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="290" y="1260" width="360" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_assoc" value="—— 액터-UC 연결 (association)" style="text;html=1;align=left;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="305" y="1290" width="340" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_include" value="‒‒▸ «include» (항상 포함)" style="text;html=1;align=left;fontSize=12;fontStyle=1;fontColor=#7a3d00;" vertex="1" parent="1">
+          <mxGeometry x="305" y="1315" width="340" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_extend" value="‒‒▸ «extend» (조건부 확장)" style="text;html=1;align=left;fontSize=12;fontStyle=1;fontColor=#002966;" vertex="1" parent="1">
+          <mxGeometry x="305" y="1340" width="340" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_general" value="——▷ generalization (일반화)" style="text;html=1;align=left;fontSize=12;fontStyle=1;fontColor=#7a5c00;" vertex="1" parent="1">
+          <mxGeometry x="305" y="1365" width="340" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_star" value="⭐ 핵심 시나리오 (S1·S2 프로토타입)" style="text;html=1;align=left;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="305" y="1390" width="340" height="22" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
