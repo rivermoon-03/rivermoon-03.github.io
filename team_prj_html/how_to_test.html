@@ -986,6 +986,26 @@
     transition: background .15s;
   }
   .preset-btn:hover { background: var(--accent-2); }
+  .preset-btn.danger { background: var(--accent-red); }
+  .preset-btn.danger:hover { background: #991b1b; }
+  .preset-btn.amber { background: var(--accent-amber); }
+  .preset-btn.amber:hover { background: #92400e; }
+
+  .scenario-row {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .scenario-btns {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
 
   .control-card {
     background: var(--bg);
@@ -1206,6 +1226,14 @@
     border-radius: 50%;
     animation: pulse 1.4s infinite ease-in-out;
   }
+  .status-pill.down { background: var(--accent-red-soft); color: var(--accent-red); }
+  .status-pill.down::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background: var(--accent-red);
+    border-radius: 50%;
+  }
   @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }
@@ -1234,6 +1262,33 @@
     font-size: 12.5px;
     font-weight: 700;
     color: var(--fg-1);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .health-badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-feature-settings: "tnum";
+    letter-spacing: 0;
+    color: var(--accent-green);
+    background: var(--accent-green-soft);
+    line-height: 1.4;
+  }
+  .health-badge.warning {
+    color: var(--accent-amber);
+    background: var(--accent-amber-soft);
+  }
+  .health-badge.danger {
+    color: var(--accent-red);
+    background: var(--accent-red-soft);
+  }
+  .health-badge.dead {
+    color: var(--fg-4);
+    background: var(--bg-3);
   }
   .gauge-val {
     font-size: 14.5px;
@@ -1773,6 +1828,14 @@
                 <button class="speed-btn" data-speed="60">60×</button>
               </div>
             </div>
+
+            <div class="scenario-row">
+              <span class="speed-label">랜덤 시나리오</span>
+              <div class="scenario-btns">
+                <button class="preset-btn amber" data-scenario="overload">랜덤 1대 과부하</button>
+                <button class="preset-btn danger" data-scenario="disconnect">랜덤 1대 통신 끊김</button>
+              </div>
+            </div>
           </div>
 
           <!-- 우측: 라이브 뷰 -->
@@ -1784,22 +1847,22 @@
 
             <div class="gauges">
               <div class="gauge" data-gauge="0">
-                <div class="gauge-row"><span class="gauge-label">srv-01</span><span class="gauge-val">73%</span></div>
+                <div class="gauge-row"><span class="gauge-label">srv-01<span class="health-badge" data-health title="UC19 건강 점수">건강 100</span></span><span class="gauge-val">73%</span></div>
                 <div class="gauge-bar"><div class="gauge-fill" style="width:73%"></div></div>
                 <div class="gauge-status"><span class="status-tag">정상</span><span class="extra">송신 ON</span></div>
               </div>
               <div class="gauge" data-gauge="1">
-                <div class="gauge-row"><span class="gauge-label">srv-02</span><span class="gauge-val">45%</span></div>
+                <div class="gauge-row"><span class="gauge-label">srv-02<span class="health-badge" data-health title="UC19 건강 점수">건강 100</span></span><span class="gauge-val">45%</span></div>
                 <div class="gauge-bar"><div class="gauge-fill" style="width:45%"></div></div>
                 <div class="gauge-status"><span class="status-tag">정상</span><span class="extra">송신 ON</span></div>
               </div>
               <div class="gauge" data-gauge="2">
-                <div class="gauge-row"><span class="gauge-label">srv-03</span><span class="gauge-val">60%</span></div>
+                <div class="gauge-row"><span class="gauge-label">srv-03<span class="health-badge" data-health title="UC19 건강 점수">건강 100</span></span><span class="gauge-val">60%</span></div>
                 <div class="gauge-bar"><div class="gauge-fill" style="width:60%"></div></div>
                 <div class="gauge-status"><span class="status-tag">정상</span><span class="extra">송신 ON</span></div>
               </div>
               <div class="gauge" data-gauge="3">
-                <div class="gauge-row"><span class="gauge-label">srv-04</span><span class="gauge-val">50%</span></div>
+                <div class="gauge-row"><span class="gauge-label">srv-04<span class="health-badge" data-health title="UC19 건강 점수">건강 100</span></span><span class="gauge-val">50%</span></div>
                 <div class="gauge-bar"><div class="gauge-fill" style="width:50%"></div></div>
                 <div class="gauge-status"><span class="status-tag">정상</span><span class="extra">송신 ON</span></div>
               </div>
@@ -2093,7 +2156,10 @@
           <div class="sim-panel">
             <div class="sim-panel-head">
               <span class="title">Docker Exec Console</span>
-              <button class="preset-btn" data-preset="uc15">UC21 장애 시연</button>
+              <div style="display:flex; gap:6px;">
+                <button class="preset-btn" data-preset="uc15">UC21 장애 시연</button>
+                <button class="preset-btn danger" data-preset="outage">전체 다운 시연</button>
+              </div>
             </div>
 
             <div class="control-card">
@@ -2167,22 +2233,22 @@
 
             <div class="gauges">
               <div class="gauge" data-gauge="0">
-                <div class="gauge-row"><span class="gauge-label">srv-01</span><span class="gauge-val">5%</span></div>
+                <div class="gauge-row"><span class="gauge-label">srv-01<span class="health-badge" data-health title="UC19 건강 점수">건강 100</span></span><span class="gauge-val">5%</span></div>
                 <div class="gauge-bar"><div class="gauge-fill idle" style="width:5%"></div></div>
                 <div class="gauge-status"><span class="status-tag idle">유휴</span><span class="extra">mem 10%</span></div>
               </div>
               <div class="gauge" data-gauge="1">
-                <div class="gauge-row"><span class="gauge-label">srv-02</span><span class="gauge-val">5%</span></div>
+                <div class="gauge-row"><span class="gauge-label">srv-02<span class="health-badge" data-health title="UC19 건강 점수">건강 100</span></span><span class="gauge-val">5%</span></div>
                 <div class="gauge-bar"><div class="gauge-fill idle" style="width:5%"></div></div>
                 <div class="gauge-status"><span class="status-tag idle">유휴</span><span class="extra">mem 10%</span></div>
               </div>
               <div class="gauge" data-gauge="2">
-                <div class="gauge-row"><span class="gauge-label">srv-03</span><span class="gauge-val">5%</span></div>
+                <div class="gauge-row"><span class="gauge-label">srv-03<span class="health-badge" data-health title="UC19 건강 점수">건강 100</span></span><span class="gauge-val">5%</span></div>
                 <div class="gauge-bar"><div class="gauge-fill idle" style="width:5%"></div></div>
                 <div class="gauge-status"><span class="status-tag idle">유휴</span><span class="extra">mem 10%</span></div>
               </div>
               <div class="gauge" data-gauge="3">
-                <div class="gauge-row"><span class="gauge-label">srv-04</span><span class="gauge-val">5%</span></div>
+                <div class="gauge-row"><span class="gauge-label">srv-04<span class="health-badge" data-health title="UC19 건강 점수">건강 100</span></span><span class="gauge-val">5%</span></div>
                 <div class="gauge-bar"><div class="gauge-fill idle" style="width:5%"></div></div>
                 <div class="gauge-status"><span class="status-tag idle">유휴</span><span class="extra">mem 10%</span></div>
               </div>
@@ -2438,6 +2504,30 @@
       return { label: '높음', cls: 'danger', fill: 'danger' };
     }
 
+    // UC19 — 건강 점수 (0~100). 낮을수록 위험.
+    function getHealthScore(item) {
+      if (item.state === 'killed') return 0;
+      if (item.state === 'paused') return 60;
+      if (!item.sending) {
+        // 송신 OFF: 즉시 70점, 미수신 누적 시 추가 감점
+        const s = 70 - Math.min(55, (item.missCount || 0) * 12);
+        return Math.max(15, Math.round(s));
+      }
+      let s = 100;
+      if (item.cpu > 90) s -= Math.min(60, (item.overloadCount || 0) * 2);
+      else if (item.cpu > 80) s -= 5;
+      if (item.idleWarned) s -= 10;
+      if (typeof item.mem === 'number' && item.mem > 85) s -= 10;
+      return Math.max(0, Math.round(s));
+    }
+
+    function healthClass(score, isKilled) {
+      if (isKilled) return 'dead';
+      if (score >= 80) return '';
+      if (score >= 50) return 'warning';
+      return 'danger';
+    }
+
     function renderGauges(key) {
       const sim = SIM[key];
       sim.items.forEach((it, i) => {
@@ -2461,6 +2551,12 @@
             extra.textContent = it.sending ? '송신 ON' : '송신 OFF';
           }
         }
+        const healthEl = root.querySelector('[data-health]');
+        if (healthEl) {
+          const h = getHealthScore(it);
+          healthEl.textContent = `건강 ${h}`;
+          healthEl.className = 'health-badge ' + healthClass(h, it.state === 'killed');
+        }
       });
     }
 
@@ -2472,6 +2568,9 @@
       sim.items.forEach(it => {
         if (it.state === 'killed') { it.cpu = 0; it.mem = 0; return; }
         if (it.state === 'paused') { it.cpu = 0; it.mem = Math.max(0, it.mem * 0.95); return; }
+        // 송신 OFF → 백엔드는 신규 메트릭을 받지 못함. 마지막 값으로 동결.
+        // 슬라이더 조작은 targetCpu만 갱신하며, 송신이 재개되면 그때부터 수렴이 시작된다.
+        if (!it.sending) return;
         const diff = it.targetCpu - it.cpu;
         it.cpu += diff * 0.25 + (Math.random() - 0.5) * 3;
         it.cpu = Math.max(0, Math.min(100, it.cpu));
@@ -2482,15 +2581,37 @@
         }
       });
 
-      // UC14 — 매 5틱마다 수집 로그
+      // UC14 — 매 5틱마다 메트릭 수집 (per-server 상태 전이 + 누적 미수신 escalation)
       if (sim.tick % 5 === 0) {
-        const recv = sim.items.filter(it => it.sending && it.state !== 'killed').length;
         const total = sim.items.length;
-        const missing = sim.items.filter(it => !it.sending || it.state === 'killed').map(it => it.id);
-        if (recv === total) {
-          addLog(key, 'UC14', `메트릭 수집 완료 — <strong>${recv}/${total}</strong> 서버 정상 수신`);
-        } else {
-          addLog(key, 'UC14', `<strong>[E1] 응답 없음</strong> — ${missing.join(', ')} MISSING 기록 (${recv}/${total})`);
+        let allOk = true;
+        sim.items.forEach(it => {
+          const isMissing = !it.sending || it.state === 'killed';
+          if (isMissing) {
+            allOk = false;
+            it.missCount = (it.missCount || 0) + 1;
+            if (it.missCount === 1) {
+              const recv = sim.items.filter(x => x.sending && x.state !== 'killed').length;
+              addLog(key, 'UC14', `<strong>[E1] 응답 없음</strong> — ${it.id} MISSING 기록 (${recv}/${total})`);
+            } else if (it.missCount === 3 && !it.missEscalated) {
+              it.missEscalated = true;
+              addLog(key, 'UC21', `<strong>${it.id} 통신 두절 확정</strong> — 미수신 3회 누적, 다운타임 기록 시작, ADM 알림 발송`);
+            } else if (it.missCount === 6) {
+              addLog(key, 'UC16', `<strong>${it.id} 예약 강제 만료</strong> — IN_USE → RECLAIMED, Quota 환원, STU에게 사과 알림`);
+            }
+          } else {
+            if (it.missCount > 0) {
+              if (it.missEscalated) {
+                addLog(key, 'UC21', `<strong>${it.id} 통신 복구</strong> — 다운타임 종료, 가용성 그래프 마감`);
+              }
+              it.missCount = 0;
+              it.missEscalated = false;
+            }
+          }
+        });
+        // 전체 정상일 때만 매 30틱마다 heartbeat
+        if (allOk && sim.tick % 30 === 0) {
+          addLog(key, 'UC14', `메트릭 수집 정상 — <strong>${total}/${total}</strong> 서버 정상 수신`);
         }
       }
 
@@ -2538,10 +2659,59 @@
         });
       }
 
+      // UC18 + UC19 — 지속 과부하 감지 (CPU > 90% 누적 카운터)
+      sim.items.forEach(it => {
+        if (it.state === 'killed' || !it.sending) {
+          it.overloadCount = 0;
+          it.overloadEscalated = false;
+          return;
+        }
+        if (it.cpu > 90) {
+          it.overloadCount = (it.overloadCount || 0) + 1;
+          if (it.overloadCount === 15 && !it.overloadEscalated) {
+            it.overloadEscalated = true;
+            addLog(key, 'UC18', `<strong>${it.id} 지속 과부하 경고</strong> — CPU 90%↑ 15틱 연속, 점유 사용자에게 강제 알림`);
+          } else if (it.overloadCount === 30) {
+            addLog(key, 'UC19', `<strong>${it.id} 건강 점수 "위험"</strong> 강등 — MGR에게 강제 종료 검토 요청 (CPU 90%↑ 30틱)`);
+          }
+        } else {
+          if (it.overloadCount >= 15 && it.overloadEscalated) {
+            addLog(key, 'UC18', `${it.id} 과부하 해소 — CPU 정상 구간 복귀`);
+          }
+          it.overloadCount = 0;
+          it.overloadEscalated = false;
+        }
+      });
+
       // UC21 (Docker만) — 컨테이너 종료 이벤트
       // (kill 시 즉시 로그됨)
 
+      // UC21 — 전체 다운 / 부분 복구 전이 감지
+      if (sim.mode === 'docker') {
+        const allKilled = sim.items.every(it => it.state === 'killed');
+        if (allKilled && !sim.allKilled) {
+          sim.allKilled = true;
+          addLog(key, 'UC21', `<strong>전체 컨테이너 다운 감지</strong> — 4/4 서버 동시 종료, <strong>SERVICE DOWN</strong>`);
+          addLog(key, 'UC21', `운영 대시보드 적색 알람 — ADM에 SMS/Email 긴급 통보 발송`);
+          addLog(key, 'UC16', `<strong>전체 Reservation 강제 만료</strong> — IN_USE 건 일괄 RECLAIMED 처리`);
+          addLog(key, 'UC15', `사용자 Quota 자동 환원 — 4명 STU에게 사과 알림 발송`);
+          setStatusPill(key, 'down', 'Service Down');
+        } else if (!allKilled && sim.allKilled) {
+          sim.allKilled = false;
+          const alive = sim.items.filter(it => it.state !== 'killed').map(it => it.id);
+          addLog(key, 'UC21', `<strong>부분 복구</strong> — ${alive.join(', ')} 가용 (${alive.length}/4)`);
+          setStatusPill(key, 'running', 'Running');
+        }
+      }
+
       renderGauges(key);
+    }
+
+    function setStatusPill(key, cls, text) {
+      const pill = document.querySelector(`[data-sim="${key}"] .status-pill`);
+      if (!pill) return;
+      pill.className = 'status-pill ' + cls;
+      pill.textContent = text;
     }
 
     function bindControls(key) {
@@ -2636,9 +2806,44 @@
         });
       }
 
-      // 프리셋
-      const presetBtn = root.querySelector('[data-preset]');
-      if (presetBtn) {
+      // 랜덤 시나리오 (method-1 전용)
+      root.querySelectorAll('[data-scenario]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const scenario = btn.dataset.scenario;
+          if (scenario === 'overload') {
+            const i = Math.floor(Math.random() * sim.items.length);
+            const it = sim.items[i];
+            if (!it.sending) {
+              it.sending = true;
+              const tg = root.querySelector(`[data-toggle="send"][data-idx="${i}"]`);
+              if (tg) tg.checked = true;
+            }
+            const target = 92 + Math.floor(Math.random() * 7);
+            it.targetCpu = target;
+            const slider = root.querySelector(`[data-slider="cpu"][data-idx="${i}"]`);
+            const valEl = root.querySelector(`[data-val="${i}"]`);
+            if (slider) slider.value = target;
+            if (valEl) valEl.textContent = target + '%';
+            addLog(key, 'SYS', `<strong>랜덤 과부하 시나리오</strong> — ${it.id} CPU ${target}% 부하 발생`);
+            addLog(key, 'SYS', `UC18 이상 탐지 대기 중… (μ±2σ 이탈 시 자동 알림)`);
+          } else if (scenario === 'disconnect') {
+            const candidates = sim.items.map((it, i) => ({ it, i })).filter(x => x.it.sending);
+            if (candidates.length === 0) {
+              addLog(key, 'SYS', `모든 에이전트가 이미 송신 중단 상태`);
+              return;
+            }
+            const pick = candidates[Math.floor(Math.random() * candidates.length)];
+            pick.it.sending = false;
+            const tg = root.querySelector(`[data-toggle="send"][data-idx="${pick.i}"]`);
+            if (tg) tg.checked = false;
+            addLog(key, 'SYS', `<strong>랜덤 통신 끊김 시나리오</strong> — ${pick.it.id} 송신 중단`);
+            addLog(key, 'SYS', `<strong>UC14 [E1]</strong> 응답 없음 시나리오 대기 중 — 다음 수집 주기에 MISSING 기록`);
+          }
+        });
+      });
+
+      // 프리셋 (패널당 여러 개 가능)
+      root.querySelectorAll('[data-preset]').forEach(presetBtn => {
         presetBtn.addEventListener('click', () => {
           const preset = presetBtn.dataset.preset;
           if (key === 'method-1' && preset === 'uc15') {
@@ -2664,8 +2869,19 @@
               addLog(key, 'UC21', `<strong>srv-01 컨테이너 비정상 종료</strong> — UC21 가용성 그래프에 다운타임 반영`);
             }, 2000);
           }
+          if (key === 'method-2' && preset === 'outage') {
+            addLog(key, 'SYS', `<strong>전체 장애 시나리오 시작</strong> — 4개 컨테이너 순차 강제 종료`);
+            sim.items.forEach((it, i) => {
+              setTimeout(() => {
+                it.state = 'killed';
+                it.cpu = 0;
+                it.mem = 0;
+                addLog(key, 'UC21', `<code>docker kill ${it.id}</code> — 컨테이너 강제 종료`);
+              }, 500 * (i + 1));
+            });
+          }
         });
-      }
+      });
     }
 
     function start(key) {
