@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>서버 예약/할당 관리 시스템 — 4조 문서 색인</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-2: #fafafa;
+    --bg-3: #f4f4f5;
+    --border: #e4e4e7;
+    --fg-1: #0a0a0a;
+    --fg-2: #27272a;
+    --fg-3: #52525b;
+    --fg-4: #a1a1aa;
+    --accent-blue: #1d4ed8;
+    --accent-blue-soft: #eff6ff;
+    --font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--fg-1);
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 80px 32px 100px;
+  }
+
+  @media (max-width: 640px) {
+    .container { padding: 48px 20px 80px; }
+  }
+
+  /* ============== 헤더 ============== */
+  header.cover {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+    margin-bottom: 56px;
+  }
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12.5px;
+    color: var(--fg-3);
+    font-weight: 500;
+    margin-bottom: 36px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .meta strong { color: var(--fg-1); font-weight: 600; }
+  .tag {
+    display: inline-block;
+    font-size: 13px;
+    color: var(--accent-blue);
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  h1 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.25;
+    margin-bottom: 14px;
+  }
+  .sub {
+    font-size: 15.5px;
+    color: var(--fg-3);
+    line-height: 1.6;
+    max-width: 640px;
+  }
+
+  /* ============== 섹션 ============== */
+  .section-h {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fg-4);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .section-h .count {
+    color: var(--fg-3);
+    font-weight: 500;
+    font-size: 11.5px;
+    letter-spacing: 0;
+  }
+
+  /* ============== 문서 카드 ============== */
+  .doc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  a.doc {
+    display: grid;
+    grid-template-columns: 48px 1fr 24px;
+    gap: 18px;
+    align-items: center;
+    padding: 20px 22px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color .15s ease, background .15s ease, transform .15s ease;
+  }
+  a.doc:hover {
+    border-color: var(--fg-1);
+    background: var(--bg-2);
+  }
+  a.doc:hover .arrow {
+    transform: translateX(3px);
+    color: var(--fg-1);
+  }
+  a.doc .num {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-blue);
+    font-feature-settings: "tnum";
+    background: var(--accent-blue-soft);
+    border-radius: 6px;
+    padding: 7px 0;
+    text-align: center;
+  }
+  a.doc .body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  a.doc .title {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--fg-1);
+    letter-spacing: -0.01em;
+  }
+  a.doc .desc {
+    font-size: 13px;
+    color: var(--fg-3);
+    line-height: 1.5;
+  }
+  a.doc .info {
+    font-size: 11.5px;
+    color: var(--fg-4);
+    margin-top: 4px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-weight: 500;
+  }
+  a.doc .info .dot { color: var(--border); }
+  a.doc .arrow {
+    font-size: 18px;
+    color: var(--fg-4);
+    line-height: 1;
+    transition: transform .15s ease, color .15s ease;
+    text-align: right;
+  }
+
+  /* 빈 섹션 안내 (향후 카테고리 추가 시 활용) */
+  .empty {
+    padding: 18px 22px;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--fg-4);
+    text-align: center;
+  }
+
+  /* ============== 푸터 ============== */
+  footer {
+    margin-top: 80px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12.5px;
+    color: var(--fg-4);
+    font-weight: 500;
+  }
+  footer strong { color: var(--fg-2); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="cover">
+    <div class="meta">
+      <span><strong>소프트웨어공학 (01)</strong> · 4조</span>
+      <span>2026 · 1학기</span>
+    </div>
+    <span class="tag">팀 프로젝트 · 문서 색인</span>
+    <h1>서버 예약/할당 관리 시스템<br>설계 및 구현 문서</h1>
+    <p class="sub">4조의 팀 프로젝트 산출물 색인. 각 문서는 작성 시점 기준 검토 자료이며, 진행에 따라 항목이 추가됩니다.</p>
+  </header>
+
+  <section>
+    <div class="section-h">
+      <span>Documents</span>
+      <span class="count">1건</span>
+    </div>
+
+    <div class="doc-list">
+      <a class="doc" href="how_to_test.html">
+        <div class="num">01</div>
+        <div class="body">
+          <div class="title">시연 환경 설계 비교 분석</div>
+          <div class="desc">Mock Agent와 Docker 컨테이너 방식에 대한 비교 검토. 작동 원리·기술 스택·장단점·UC 적합도 정리.</div>
+          <div class="info">
+            <span>테스트 · 시연 설계</span>
+            <span class="dot">·</span>
+            <span>2026.05.19</span>
+          </div>
+        </div>
+        <div class="arrow">→</div>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <div><strong>서버 예약/할당 관리 시스템</strong> · 4조 내부 문서</div>
+    <div>2026.05.19</div>
+  </footer>
+
+</div>
+</body>
+</html>

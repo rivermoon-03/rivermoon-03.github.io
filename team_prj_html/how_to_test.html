@@ -1,0 +1,2694 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>시연 환경 설계 비교 분석 — Mock Agent vs Docker 컨테이너</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-2: #fafafa;
+    --bg-3: #f4f4f5;
+    --border: #e4e4e7;
+    --border-2: #d4d4d8;
+    --fg-1: #0a0a0a;
+    --fg-2: #27272a;
+    --fg-3: #52525b;
+    --fg-4: #a1a1aa;
+    --fg-5: #d4d4d8;
+    --accent: #0f172a;
+    --accent-2: #1e293b;
+    --accent-blue: #1d4ed8;
+    --accent-blue-soft: #eff6ff;
+    --accent-amber: #b45309;
+    --accent-amber-soft: #fef3c7;
+    --accent-red: #b91c1c;
+    --accent-red-soft: #fef2f2;
+    --accent-green: #15803d;
+    --accent-green-soft: #f0fdf4;
+    --radius: 6px;
+    --font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+      system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: "Pretendard Variable", "JetBrains Mono", ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--fg-1);
+    font-size: 15px;
+    line-height: 1.65;
+    font-feature-settings: "ss06", "tnum";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection { background: var(--accent); color: #fff; }
+
+  .container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 64px 56px 120px;
+  }
+
+  @media (max-width: 880px) {
+    .container { padding: 40px 24px 80px; }
+    body { font-size: 14.5px; }
+  }
+
+  /* ================== 표지 영역 ================== */
+  .cover {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 36px;
+    margin-bottom: 36px;
+  }
+  .cover-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12.5px;
+    color: var(--fg-3);
+    font-weight: 500;
+    margin-bottom: 40px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cover-meta .left, .cover-meta .right {
+    display: flex;
+    gap: 24px;
+  }
+  .cover-meta .doc-id {
+    color: var(--fg-1);
+    font-weight: 600;
+  }
+  .cover-meta .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    background: var(--bg-3);
+    color: var(--fg-2);
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  .cover-tag {
+    display: inline-block;
+    font-size: 13px;
+    color: var(--accent-blue);
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  h1.cover-title {
+    font-size: clamp(28px, 3.6vw, 38px);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.25;
+    color: var(--fg-1);
+    margin-bottom: 16px;
+    max-width: 880px;
+  }
+  .cover-sub {
+    font-size: 16px;
+    color: var(--fg-3);
+    line-height: 1.6;
+    max-width: 760px;
+    margin-bottom: 28px;
+  }
+  .cover-info {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+  .cover-info .item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .cover-info .item .key {
+    font-size: 11.5px;
+    color: var(--fg-4);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .cover-info .item .val {
+    font-size: 14.5px;
+    color: var(--fg-1);
+    font-weight: 600;
+  }
+  @media (max-width: 720px) {
+    .cover-info { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ================== Executive Summary ================== */
+  .summary {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    margin-bottom: 40px;
+  }
+  .summary-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .summary-head h2 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fg-2);
+  }
+  .summary-head .dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent-blue);
+    border-radius: 50%;
+  }
+  .summary p {
+    font-size: 15.5px;
+    line-height: 1.7;
+    color: var(--fg-2);
+  }
+  .summary p strong { color: var(--fg-1); font-weight: 700; }
+  .summary p .em-blue { color: var(--accent-blue); font-weight: 600; }
+
+  /* ================== 탭 바 (세그먼트 컨트롤) ================== */
+  .tabs-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg);
+    padding: 12px 0 20px;
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 6px;
+    overflow-x: auto;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 14px 20px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--fg-3);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background .18s ease, color .18s ease, box-shadow .18s ease;
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 48px;
+  }
+  .tab-btn .tab-num {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--fg-3);
+    font-feature-settings: "tnum";
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 5px;
+    transition: background .18s ease, color .18s ease, border-color .18s ease;
+    letter-spacing: 0;
+  }
+  .tab-btn:hover {
+    background: var(--bg-2);
+    color: var(--fg-1);
+  }
+  .tab-btn:hover .tab-num {
+    color: var(--fg-1);
+    border-color: var(--border-2);
+  }
+  .tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 4px 12px rgba(15,23,42,0.18);
+  }
+  .tab-btn.active .tab-num {
+    background: rgba(255,255,255,0.16);
+    color: #fff;
+    border-color: rgba(255,255,255,0.18);
+  }
+  .tab-btn.active:hover { background: var(--accent); color: #fff; }
+
+  @media (max-width: 640px) {
+    .tab-btn { padding: 12px 14px; font-size: 13.5px; min-height: 44px; }
+    .tab-btn .tab-num { padding: 2px 6px; font-size: 10.5px; }
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ================== 섹션 헤더 ================== */
+  h2.section-h {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fg-4);
+    margin-bottom: 8px;
+  }
+  h2.section-h .num {
+    color: var(--accent-blue);
+    font-weight: 700;
+    margin-right: 8px;
+  }
+  h3.option-title {
+    font-size: clamp(26px, 3vw, 30px);
+    font-weight: 700;
+    letter-spacing: -0.022em;
+    line-height: 1.2;
+    color: var(--fg-1);
+    margin-bottom: 14px;
+  }
+  .option-tagline {
+    font-size: 16px;
+    color: var(--fg-3);
+    line-height: 1.6;
+    max-width: 820px;
+    margin-bottom: 40px;
+  }
+  .option-tagline strong { color: var(--fg-1); font-weight: 600; }
+
+  /* ================== 옵션 컨테이너 ================== */
+  section.option {
+    padding-top: 8px;
+  }
+  section.option .opt-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  section.option .opt-head .opt-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-blue);
+    margin-bottom: 8px;
+  }
+  section.option .opt-head .opt-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+    text-align: right;
+    font-size: 13px;
+    color: var(--fg-3);
+  }
+  section.option .opt-head .opt-meta .meta-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  section.option .opt-head .opt-meta .meta-row .label {
+    color: var(--fg-4);
+    font-size: 12px;
+  }
+  section.option .opt-head .opt-meta .meta-row .val {
+    color: var(--fg-1);
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  /* ================== 다이어그램 ================== */
+  .figure {
+    margin-bottom: 56px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .figure-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 22px;
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--border);
+    font-size: 12.5px;
+  }
+  .figure-head .fig-label {
+    font-weight: 600;
+    color: var(--fg-2);
+  }
+  .figure-head .fig-label .fig-num {
+    color: var(--fg-4);
+    font-weight: 500;
+    margin-right: 8px;
+  }
+  .figure-head .fig-meta {
+    font-size: 12px;
+    color: var(--fg-3);
+    display: flex;
+    gap: 16px;
+  }
+  .figure-head .fig-meta .key { color: var(--fg-4); margin-right: 4px; }
+  .figure-body {
+    padding: 32px 24px;
+    background: var(--bg);
+  }
+  svg.dgm {
+    width: 100%;
+    height: auto;
+    display: block;
+    font-family: var(--font);
+    font-size: 11.5px;
+    font-weight: 500;
+  }
+  svg.dgm .n-rect {
+    fill: #fff;
+    stroke: var(--fg-2);
+    stroke-width: 1.2;
+  }
+  svg.dgm .n-rect-soft {
+    fill: var(--bg-2);
+    stroke: var(--fg-4);
+    stroke-width: 1;
+  }
+  svg.dgm .n-rect-accent {
+    fill: var(--accent-blue-soft);
+    stroke: var(--accent-blue);
+    stroke-width: 1.2;
+  }
+  svg.dgm .n-rect-dashed {
+    fill: #fff;
+    stroke: var(--fg-3);
+    stroke-width: 1;
+    stroke-dasharray: 4 3;
+  }
+  svg.dgm .core {
+    fill: #fff;
+    stroke: var(--fg-1);
+    stroke-width: 1.8;
+  }
+  svg.dgm .lbl-title {
+    fill: var(--fg-1);
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+  svg.dgm .lbl-sub {
+    fill: var(--fg-3);
+    font-size: 10.5px;
+    font-weight: 500;
+  }
+  svg.dgm .lbl-blue {
+    fill: var(--accent-blue);
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+  svg.dgm .lbl-meta {
+    fill: var(--fg-4);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  svg.dgm .arrow {
+    stroke: var(--fg-2);
+    stroke-width: 1.2;
+    fill: none;
+    marker-end: url(#arrowhead);
+  }
+  svg.dgm .arrow-control {
+    stroke: var(--accent-blue);
+    stroke-width: 1.2;
+    fill: none;
+    marker-end: url(#arrowhead-blue);
+    stroke-dasharray: 4 3;
+  }
+  svg.dgm .container-stripe { fill: var(--accent-blue); }
+  svg.dgm .container-body {
+    fill: var(--accent-blue-soft);
+    stroke: var(--accent-blue);
+    stroke-width: 1.2;
+  }
+  svg.dgm .lbl-on-blue {
+    fill: var(--accent-blue);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  /* ================== 본문 그리드 ================== */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    margin-bottom: 56px;
+  }
+  @media (max-width: 880px) {
+    .content-grid { grid-template-columns: 1fr; gap: 40px; }
+  }
+
+  h4.sub-h {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fg-2);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  h4.sub-h .step-count {
+    color: var(--fg-4);
+    font-weight: 500;
+    font-size: 11px;
+  }
+
+  ol.steps {
+    list-style: none;
+    counter-reset: step;
+  }
+  ol.steps li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--fg-2);
+  }
+  ol.steps li:last-child { border-bottom: none; }
+  ol.steps li::before {
+    content: counter(step, decimal-leading-zero);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-blue);
+    font-feature-settings: "tnum";
+    line-height: 1.5;
+  }
+  ol.steps li code {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--bg-3);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--fg-1);
+    font-weight: 500;
+  }
+  ol.steps li strong { color: var(--fg-1); font-weight: 700; }
+
+  .stack-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stack-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    transition: border-color .15s ease;
+  }
+  .stack-card:hover { border-color: var(--fg-2); }
+  .stack-card .role {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--fg-4);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .stack-card .tech {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--fg-1);
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .stack-card .note {
+    font-size: 12.5px;
+    color: var(--fg-3);
+    line-height: 1.45;
+  }
+
+  .pros-cons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .pros-cons > div { padding: 18px 20px; }
+  .pros { background: var(--accent-green-soft); border-right: 1px solid var(--border); }
+  .cons { background: var(--accent-red-soft); }
+  .pros .pc-head, .cons .pc-head {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+  .pros .pc-head { color: var(--accent-green); }
+  .cons .pc-head { color: var(--accent-red); }
+  .pros ul, .cons ul { list-style: none; }
+  .pros li, .cons li {
+    font-size: 13.5px;
+    line-height: 1.55;
+    padding: 7px 0 7px 16px;
+    position: relative;
+    color: var(--fg-2);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+  .pros li:last-child, .cons li:last-child { border-bottom: none; }
+  .pros li::before, .cons li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 14px;
+    width: 8px;
+    height: 1.5px;
+  }
+  .pros li::before { background: var(--accent-green); }
+  .cons li::before { background: var(--accent-red); }
+  .pros li strong, .cons li strong { color: var(--fg-1); font-weight: 700; }
+  @media (max-width: 640px) {
+    .pros-cons { grid-template-columns: 1fr; }
+    .pros { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+
+  .difficulty {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+  }
+  .diff-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .diff-row:last-child { border-bottom: none; }
+  .diff-label {
+    font-size: 13.5px;
+    color: var(--fg-2);
+    font-weight: 500;
+  }
+  .diff-meter {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+  }
+  .diff-meter .dot {
+    width: 16px;
+    height: 4px;
+    background: var(--fg-5);
+    border-radius: 1px;
+  }
+  .diff-meter .dot.on { background: var(--accent); }
+  .diff-meter .dot.high { background: var(--accent-red); }
+  .diff-num {
+    font-size: 12px;
+    color: var(--fg-3);
+    font-weight: 600;
+    min-width: 38px;
+    text-align: right;
+    font-feature-settings: "tnum";
+    margin-left: 8px;
+  }
+  .diff-summary {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .diff-summary .key {
+    font-size: 12px;
+    color: var(--fg-3);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .diff-summary .val {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--fg-1);
+  }
+
+  .uc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  @media (max-width: 720px) { .uc-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .uc-grid { grid-template-columns: 1fr; } }
+  .uc-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--fg-5);
+    border-radius: 4px;
+    padding: 14px 16px;
+  }
+  .uc-card.fit { border-left-color: var(--accent-green); }
+  .uc-card.partial { border-left-color: var(--accent-amber); }
+  .uc-card.weak { border-left-color: var(--accent-red); }
+  .uc-card .uc-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .uc-card .uc-code {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--fg-1);
+    letter-spacing: 0.02em;
+  }
+  .uc-card .uc-tag {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+  .uc-card.fit .uc-tag { background: var(--accent-green-soft); color: var(--accent-green); }
+  .uc-card.partial .uc-tag { background: var(--accent-amber-soft); color: var(--accent-amber); }
+  .uc-card.weak .uc-tag { background: var(--accent-red-soft); color: var(--accent-red); }
+  .uc-card .uc-name {
+    font-size: 13px;
+    color: var(--fg-2);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .uc-card .uc-desc {
+    font-size: 12.5px;
+    color: var(--fg-3);
+    line-height: 1.45;
+  }
+
+  /* ================== 비교 매트릭스 ================== */
+  .matrix-section { margin-bottom: 80px; }
+  .matrix-section h3.section-title {
+    font-size: clamp(26px, 3vw, 30px);
+    font-weight: 700;
+    letter-spacing: -0.022em;
+    line-height: 1.2;
+    color: var(--fg-1);
+    margin-bottom: 12px;
+  }
+  .matrix-section .section-sub {
+    font-size: 16px;
+    color: var(--fg-3);
+    margin-bottom: 36px;
+    max-width: 720px;
+  }
+  table.matrix {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  table.matrix thead th {
+    text-align: left;
+    padding: 14px 18px;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-2);
+    color: var(--fg-2);
+  }
+  table.matrix thead th.col { color: var(--fg-1); }
+  table.matrix tbody th {
+    text-align: left;
+    padding: 14px 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--fg-2);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-2);
+    width: 28%;
+  }
+  table.matrix tbody td {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.55;
+    color: var(--fg-2);
+    font-size: 13.5px;
+  }
+  table.matrix tbody tr:last-child td,
+  table.matrix tbody tr:last-child th { border-bottom: none; }
+  table.matrix tbody td.better {
+    background: var(--accent-blue-soft);
+    color: var(--fg-1);
+  }
+  @media (max-width: 720px) {
+    table.matrix { font-size: 13px; }
+    table.matrix tbody th, table.matrix tbody td { padding: 12px 14px; }
+  }
+
+  /* ================== 하이브리드 ================== */
+  .hybrid {
+    margin-bottom: 80px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    padding: 44px 44px 36px;
+  }
+  .hybrid .hb-tag {
+    display: inline-block;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border-radius: 3px;
+    margin-bottom: 14px;
+  }
+  .hybrid h2 {
+    font-size: clamp(24px, 2.8vw, 30px);
+    font-weight: 700;
+    letter-spacing: -0.022em;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .hybrid > p {
+    font-size: 15.5px;
+    line-height: 1.65;
+    color: rgba(255,255,255,0.78);
+    max-width: 800px;
+    margin-bottom: 12px;
+  }
+  .hybrid > p strong { color: #fff; font-weight: 700; }
+  .hybrid .hb-grid {
+    margin-top: 28px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 880px) { .hybrid .hb-grid { grid-template-columns: 1fr; } }
+  .hybrid .hb-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    padding: 18px 20px;
+  }
+  .hybrid .hb-card .role {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 8px;
+  }
+  .hybrid .hb-card .h {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  .hybrid .hb-card .d {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: rgba(255,255,255,0.75);
+  }
+
+  /* ================== 의사결정 ================== */
+  .decision h3.section-title {
+    font-size: clamp(26px, 3vw, 30px);
+    font-weight: 700;
+    letter-spacing: -0.022em;
+    line-height: 1.2;
+    color: var(--fg-1);
+    margin-bottom: 12px;
+  }
+  .decision .section-sub {
+    font-size: 16px;
+    color: var(--fg-3);
+    margin-bottom: 36px;
+    max-width: 720px;
+  }
+  .dec-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 720px) { .dec-grid { grid-template-columns: 1fr; } }
+  .dec-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+  }
+  .dec-card .dec-h {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent-blue);
+    margin-bottom: 10px;
+  }
+  .dec-card .dec-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--fg-1);
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+  .dec-card .dec-desc {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--fg-3);
+  }
+  .dec-card .dec-desc strong { color: var(--fg-1); font-weight: 700; }
+  .dec-card code {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    background: var(--bg-3);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--fg-1);
+  }
+
+  /* 비교 탭 내부 sub-block 간 간격 */
+  .compare-block {
+    margin-bottom: 24px;
+  }
+  .compare-block h2.section-h {
+    margin-top: 32px;
+  }
+  .compare-block:first-child h2.section-h {
+    margin-top: 0;
+  }
+
+  /* ================== 푸터 ================== */
+  footer.foot {
+    margin-top: 96px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12.5px;
+    color: var(--fg-4);
+    font-weight: 500;
+  }
+  footer.foot strong { color: var(--fg-2); font-weight: 600; }
+
+  /* ================== 인터랙티브 시뮬레이터 ================== */
+  .sim-intro {
+    font-size: 14.5px;
+    color: var(--fg-3);
+    margin-bottom: 22px;
+    line-height: 1.6;
+    max-width: 820px;
+  }
+  .sim-intro strong { color: var(--fg-1); font-weight: 700; }
+  .sim-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 980px) {
+    .sim-grid { grid-template-columns: 1fr; }
+  }
+  .sim-panel {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .sim-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sim-panel-head .title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fg-2);
+  }
+  .preset-btn {
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: var(--accent-blue);
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .preset-btn:hover { background: var(--accent-2); }
+
+  .control-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .control-card:last-of-type { margin-bottom: 0; }
+  .control-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .agent-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--fg-1);
+    letter-spacing: -0.01em;
+  }
+  .agent-name .agent-sub {
+    color: var(--fg-4);
+    font-weight: 500;
+    font-size: 11.5px;
+    margin-left: 6px;
+  }
+
+  /* 토글 */
+  .toggle {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    width: 38px;
+    height: 22px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .toggle .slider-pin {
+    position: absolute;
+    inset: 0;
+    background: var(--fg-5);
+    border-radius: 999px;
+    transition: background .18s ease;
+  }
+  .toggle .slider-pin::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform .18s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+  .toggle input:checked + .slider-pin { background: var(--accent-green); }
+  .toggle input:checked + .slider-pin::before { transform: translateX(16px); }
+
+  /* 슬라이더 */
+  .slider-row {
+    display: grid;
+    grid-template-columns: 32px 1fr 44px;
+    gap: 10px;
+    align-items: center;
+  }
+  .slider-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--fg-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .slider-row input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--bg-3);
+    border-radius: 999px;
+    outline: none;
+  }
+  .slider-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent-blue);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px var(--accent-blue);
+  }
+  .slider-row input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--accent-blue);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px var(--accent-blue);
+  }
+  .slider-val {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--fg-1);
+    text-align: right;
+    font-feature-settings: "tnum";
+  }
+
+  /* 액션 버튼 (Docker) */
+  .action-row {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .action-btn {
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--fg-2);
+    padding: 6px 11px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all .15s;
+    letter-spacing: -0.005em;
+  }
+  .action-btn:hover { border-color: var(--fg-2); color: var(--fg-1); background: var(--bg-2); }
+  .action-btn.primary { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+  .action-btn.primary:hover { background: var(--accent-2); }
+  .action-btn.amber { background: var(--accent-amber-soft); color: var(--accent-amber); border-color: var(--accent-amber); }
+  .action-btn.amber:hover { background: var(--accent-amber); color: #fff; }
+  .action-btn.danger { color: var(--accent-red); border-color: var(--accent-red); background: var(--accent-red-soft); }
+  .action-btn.danger:hover { background: var(--accent-red); color: #fff; }
+
+  /* 속도 제어 */
+  .speed-control {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .speed-control .speed-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--fg-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .speed-tabs {
+    display: flex;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .speed-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--fg-3);
+    cursor: pointer;
+    transition: all .15s;
+    border-right: 1px solid var(--border);
+  }
+  .speed-btn:last-child { border-right: none; }
+  .speed-btn:hover { color: var(--fg-1); background: var(--bg-2); }
+  .speed-btn.active { background: var(--accent); color: #fff; }
+
+  /* 우측 라이브 뷰 */
+  .sim-live {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .sim-live-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sim-live-head .title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fg-2);
+  }
+  .status-pill {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 3px 9px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .status-pill.running { background: var(--accent-green-soft); color: var(--accent-green); }
+  .status-pill.running::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    animation: pulse 1.4s infinite ease-in-out;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* 게이지 */
+  .gauges {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .gauge {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .gauge-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    align-items: baseline;
+  }
+  .gauge-label {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--fg-1);
+  }
+  .gauge-val {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--fg-1);
+    font-feature-settings: "tnum";
+    letter-spacing: -0.01em;
+  }
+  .gauge-bar {
+    height: 6px;
+    background: var(--bg-3);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+  }
+  .gauge-fill {
+    height: 100%;
+    background: var(--accent-blue);
+    border-radius: 999px;
+    transition: width .35s ease, background .35s ease;
+  }
+  .gauge-fill.warning { background: var(--accent-amber); }
+  .gauge-fill.danger { background: var(--accent-red); }
+  .gauge-fill.idle { background: var(--fg-5); }
+  .gauge-status {
+    margin-top: 7px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--fg-3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .gauge-status .status-tag.warning { color: var(--accent-amber); }
+  .gauge-status .status-tag.danger { color: var(--accent-red); }
+  .gauge-status .status-tag.idle { color: var(--fg-4); }
+  .gauge-status .status-tag.killed { color: var(--accent-red); font-weight: 700; }
+  .gauge-status .status-tag.paused { color: var(--accent-amber); font-weight: 700; }
+  .gauge-status .extra { color: var(--fg-4); font-weight: 500; font-size: 10.5px; }
+
+  /* 이벤트 로그 */
+  .event-log {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+  }
+  .log-head {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--fg-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .log-head .clear-btn {
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--fg-4);
+    cursor: pointer;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+    transition: color .15s;
+  }
+  .log-head .clear-btn:hover { color: var(--fg-1); }
+  .log-list {
+    max-height: 220px;
+    overflow-y: auto;
+    font-size: 12.5px;
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-right: 4px;
+  }
+  .log-list::-webkit-scrollbar { width: 4px; }
+  .log-list::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 4px; }
+  .log-item {
+    display: grid;
+    grid-template-columns: 52px 60px 1fr;
+    gap: 10px;
+    align-items: baseline;
+    padding: 4px 0;
+  }
+  .log-time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-4);
+    font-feature-settings: "tnum";
+  }
+  .log-uc {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 0;
+    border-radius: 3px;
+    text-align: center;
+    font-feature-settings: "tnum";
+  }
+  .log-uc.uc14 { background: var(--accent-blue-soft); color: var(--accent-blue); }
+  .log-uc.uc15 { background: var(--accent-amber-soft); color: var(--accent-amber); }
+  .log-uc.uc18 { background: var(--accent-red-soft); color: var(--accent-red); }
+  .log-uc.uc19 { background: var(--bg-3); color: var(--fg-2); }
+  .log-uc.uc21 { background: var(--accent); color: #fff; }
+  .log-uc.sys { background: var(--bg-3); color: var(--fg-3); }
+  .log-msg { color: var(--fg-2); }
+  .log-msg strong { color: var(--fg-1); font-weight: 700; }
+  .log-msg code {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 0 4px;
+    border-radius: 3px;
+    color: var(--fg-1);
+  }
+  .log-empty {
+    text-align: center;
+    color: var(--fg-4);
+    font-size: 12.5px;
+    padding: 28px 0 8px;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ============== 표지 ============== -->
+  <header class="cover">
+    <div class="cover-meta">
+      <div class="left">
+        <span class="doc-id">DOC · 4조-INT-2026-001</span>
+        <span>소프트웨어공학 (01)</span>
+      </div>
+      <div class="right">
+        <span>2026.05.19</span>
+        <span class="badge">Rev. 02</span>
+      </div>
+    </div>
+
+    <span class="cover-tag">시연 환경 설계 검토</span>
+    <h1 class="cover-title">
+      서버 자원 메트릭 시연 방식 비교 분석:<br>Mock Agent와 Docker 컨테이너
+    </h1>
+    <p class="cover-sub">
+      실제 GPU 클러스터 없이 <strong style="color:var(--fg-1);font-weight:600">서버 예약/할당 관리 시스템</strong>을 시연하기 위한 두 가지 접근에 대한 비교 보고서. 작동 원리, 기술 스택, 장단점, 구현 난이도, 유스케이스 적합도를 정리하여 팀 의사결정의 근거를 제공한다.
+    </p>
+    <div class="cover-info">
+      <div class="item">
+        <span class="key">프로젝트</span>
+        <span class="val">서버 예약/할당 관리</span>
+      </div>
+      <div class="item">
+        <span class="key">대상 UC</span>
+        <span class="val">UC14·15·18·19·21</span>
+      </div>
+      <div class="item">
+        <span class="key">결정 시한</span>
+        <span class="val">팀 회의 시</span>
+      </div>
+      <div class="item">
+        <span class="key">상태</span>
+        <span class="val" style="color:var(--accent-blue)">검토 중</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============== Executive Summary ============== -->
+  <section class="summary">
+    <div class="summary-head">
+      <span class="dot"></span>
+      <h2>Executive Summary</h2>
+    </div>
+    <p>
+      두 방식 모두 시스템 동작 검증은 가능하다. <span class="em-blue">Mock Agent 방식</span>은 시나리오를 완벽히 통제할 수 있어 시연 흐름 설계에 유리한 반면 "실제로 동작하고 있다"는 발표 임팩트는 약하다. <span class="em-blue">Docker 컨테이너 방식</span>은 실제 부하를 보여줄 수 있어 임팩트가 크지만, 시간 통제와 환경 의존성이 부담으로 작용한다. 학기 일정과 발표 시간(약 20분)을 고려할 때, <strong>두 방식을 결합한 하이브리드 접근</strong>이 가장 현실적이며 본 보고서가 권장하는 방향이다.
+    </p>
+  </section>
+
+  <!-- ============== 탭 바 ============== -->
+  <div class="tabs-wrap">
+    <nav class="tabs" role="tablist" aria-label="시연 환경 방식 탭">
+      <button class="tab-btn active" role="tab" aria-selected="true" data-tab="method-1">
+        <span class="tab-num">01</span>방법 1 · Mock Agent
+      </button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-tab="method-2">
+        <span class="tab-num">02</span>방법 2 · Docker 컨테이너
+      </button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-tab="compare">
+        <span class="tab-num">03</span>비교 및 결정
+      </button>
+    </nav>
+  </div>
+
+  <!-- ============== Tab 1: 방법 1 (Mock Agent) ============== -->
+  <div class="tab-panel active" role="tabpanel" data-tab="method-1">
+    <section class="option">
+      <h2 class="section-h"><span class="num">01</span>Option A</h2>
+      <div class="opt-head">
+        <div>
+          <div class="opt-label">Mock Agent</div>
+          <h3 class="option-title">사전 정의된 클라이언트의 가상 메트릭 송출</h3>
+        </div>
+        <div class="opt-meta">
+          <div class="meta-row"><span class="label">구현 기간</span><span class="val">1–2주</span></div>
+          <div class="meta-row"><span class="label">실제 부하</span><span class="val">없음</span></div>
+          <div class="meta-row"><span class="label">통제 수준</span><span class="val">완전 통제</span></div>
+        </div>
+      </div>
+
+      <p class="option-tagline">
+        <strong>실제 부하를 발생시키지 않고</strong>, N개의 클라이언트 스크립트가 사전에 정의된 패턴(또는 시연자가 실시간으로 지정한 값)에 따라 가상의 CPU·메모리·네트워크 사용률을 백엔드로 송신한다. 별도의 <strong>Demo Conductor</strong> 컨트롤러가 각 에이전트의 행동을 시연 중 동적으로 변경한다.
+      </p>
+
+      <div class="figure">
+        <div class="figure-head">
+          <div class="fig-label"><span class="fig-num">Fig. 01</span>Mock Agent 토폴로지</div>
+          <div class="fig-meta">
+            <span><span class="key">REAL_LOAD</span>0</span>
+            <span><span class="key">CONTROL</span>Scripted</span>
+          </div>
+        </div>
+        <div class="figure-body">
+          <svg class="dgm" viewBox="0 0 1000 460" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="#27272a"/>
+              </marker>
+              <marker id="arrowhead-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="#1d4ed8"/>
+              </marker>
+            </defs>
+            <g>
+              <rect class="n-rect-accent" x="370" y="20" width="260" height="56" rx="4"/>
+              <text class="lbl-blue" x="500" y="44" text-anchor="middle">Demo Conductor</text>
+              <text class="lbl-sub" x="500" y="62" text-anchor="middle">시연자 컨트롤 패널 · Web UI</text>
+            </g>
+            <g>
+              <rect class="n-rect" x="40" y="140" width="200" height="50" rx="3"/>
+              <text class="lbl-title" x="55" y="166">Mock Agent 01</text>
+              <text class="lbl-sub" x="55" y="183">srv-01 · gpu-a</text>
+            </g>
+            <g>
+              <rect class="n-rect" x="40" y="210" width="200" height="50" rx="3"/>
+              <text class="lbl-title" x="55" y="236">Mock Agent 02</text>
+              <text class="lbl-sub" x="55" y="253">srv-02 · gpu-b</text>
+            </g>
+            <g>
+              <rect class="n-rect" x="40" y="280" width="200" height="50" rx="3"/>
+              <text class="lbl-title" x="55" y="306">Mock Agent 03</text>
+              <text class="lbl-sub" x="55" y="323">srv-03 · cpu</text>
+            </g>
+            <g>
+              <rect class="n-rect" x="40" y="350" width="200" height="50" rx="3"/>
+              <text class="lbl-title" x="55" y="376">Mock Agent 04</text>
+              <text class="lbl-sub" x="55" y="393">srv-04 · gpu-c</text>
+            </g>
+            <g>
+              <rect class="core" x="640" y="140" width="320" height="260" rx="4"/>
+              <text class="lbl-title" x="800" y="166" text-anchor="middle">Backend · Spring Boot</text>
+              <text class="lbl-sub" x="800" y="184" text-anchor="middle">메트릭 수신 · 검증 · 저장 · 트리거</text>
+              <rect class="n-rect-soft" x="660" y="206" width="135" height="40" rx="3"/>
+              <text class="lbl-title" x="727" y="231" text-anchor="middle">UC14 수집기</text>
+              <rect class="n-rect-soft" x="805" y="206" width="135" height="40" rx="3"/>
+              <text class="lbl-title" x="872" y="231" text-anchor="middle">UC15 유휴 회수</text>
+              <rect class="n-rect-soft" x="660" y="256" width="135" height="40" rx="3"/>
+              <text class="lbl-title" x="727" y="281" text-anchor="middle">UC18 이상 탐지</text>
+              <rect class="n-rect-soft" x="805" y="256" width="135" height="40" rx="3"/>
+              <text class="lbl-title" x="872" y="281" text-anchor="middle">UC19 Health</text>
+              <rect class="n-rect-dashed" x="660" y="316" width="280" height="64" rx="3"/>
+              <text class="lbl-title" x="800" y="342" text-anchor="middle">대시보드 UI · UC21</text>
+              <text class="lbl-sub" x="800" y="360" text-anchor="middle">스케줄러 상태 · 수집률 · Health 분포</text>
+            </g>
+            <path class="arrow" d="M 240 165 C 400 165 480 215 638 220"/>
+            <path class="arrow" d="M 240 235 C 400 235 480 230 638 232"/>
+            <path class="arrow" d="M 240 305 C 400 305 480 270 638 264"/>
+            <path class="arrow" d="M 240 375 C 400 375 480 310 638 278"/>
+            <path class="arrow-control" d="M 400 70 C 320 100 240 130 175 138"/>
+            <path class="arrow-control" d="M 430 76 C 340 130 240 200 175 208"/>
+            <path class="arrow-control" d="M 460 76 C 380 170 270 270 175 278"/>
+            <path class="arrow-control" d="M 490 76 C 420 200 300 340 175 348"/>
+            <text x="370" y="124" class="lbl-meta">POST /metrics · 1분 주기</text>
+            <text x="260" y="108" class="lbl-on-blue" style="font-size:10.5px">CONTROL ↓</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <div>
+          <h4 class="sub-h"><span>1.1 작동 원리</span><span class="step-count">5단계</span></h4>
+          <ol class="steps">
+            <li><span>Python 스크립트 <code>mock_agent.py</code>를 N개 인스턴스로 실행. 각 인스턴스는 고유한 서버 식별자(srv-01 등)를 보유.</span></li>
+            <li><span>각 에이전트는 1분 주기로 <code>POST /metrics</code>를 백엔드에 송신. 페이로드는 <strong>사인파+가우시안 노이즈</strong>로 합성된 사용률 값.</span></li>
+            <li><span>Demo Conductor에서 슬라이더를 조작하면 <code>POST /control</code>이 해당 에이전트에 전달되며, 다음 송신 주기부터 값이 변경됨.</span></li>
+            <li><span>UC14가 메트릭을 수신하면 UC15·UC18·UC19가 평소 로직대로 자동 반응. 시스템은 메트릭의 진위를 구분하지 못함.</span></li>
+            <li><span>송신 토글로 <strong>UC14 [E1] 응답 없음</strong>, 값 변조 옵션으로 <strong>[E2] 형식 오류</strong> 시나리오를 즉시 재현.</span></li>
+          </ol>
+        </div>
+
+        <div>
+          <h4 class="sub-h"><span>1.2 기술 스택</span><span class="step-count">6 components</span></h4>
+          <div class="stack-grid">
+            <div class="stack-card">
+              <div class="role">에이전트 런타임</div>
+              <div class="tech">Python 3.11</div>
+              <div class="note">requests + apscheduler. 약 200줄.</div>
+            </div>
+            <div class="stack-card">
+              <div class="role">컨트롤 패널</div>
+              <div class="tech">React + Vite</div>
+              <div class="note">슬라이더·토글로 에이전트 제어.</div>
+            </div>
+            <div class="stack-card">
+              <div class="role">통신 프로토콜</div>
+              <div class="tech">HTTP / JSON</div>
+              <div class="note">REST 표준. WebSocket 불필요.</div>
+            </div>
+            <div class="stack-card">
+              <div class="role">실행 환경</div>
+              <div class="tech">노트북 1대</div>
+              <div class="note">OS 무관. 외부 의존성 없음.</div>
+            </div>
+            <div class="stack-card">
+              <div class="role">시간 가속</div>
+              <div class="tech">환경 변수</div>
+              <div class="note"><code>SCHEDULE_TICK_SECONDS</code>로 압축.</div>
+            </div>
+            <div class="stack-card">
+              <div class="role">데이터 패턴</div>
+              <div class="tech">numpy / random</div>
+              <div class="note">시드 고정 시 100% 재현 가능.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <div>
+          <h4 class="sub-h">1.3 장단점 분석</h4>
+          <div class="pros-cons">
+            <div class="pros">
+              <div class="pc-head">Strengths</div>
+              <ul>
+                <li><strong>완전한 시나리오 통제.</strong> "정확히 4% CPU를 31분간 유지" 같은 까다로운 조건도 가능.</li>
+                <li>장비 의존성 없음. 노트북 1대로 충분.</li>
+                <li>실패 분기(형식 오류·송신 단절·이상 징후)를 버튼 한 번에 재현.</li>
+                <li>동일 입력 시 동일 출력. 시연 사고 위험이 낮음.</li>
+                <li>구현 부담이 가볍다. Python 200~300줄 수준.</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <div class="pc-head">Weaknesses</div>
+              <ul>
+                <li><strong>발표 임팩트가 제한적.</strong> "실제 동작" 인상이 약함.</li>
+                <li>평가자의 "메트릭이 실제냐"는 질문에 대응이 어려움.</li>
+                <li>실제 에이전트–서버 통신 프로토콜의 현실성 미검증.</li>
+                <li>OS 수준 실패(네트워크 단절 등)는 흉내내기 까다로움.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="sub-h">1.4 구현 난이도</h4>
+          <div class="difficulty">
+            <div class="diff-row">
+              <div class="diff-label">백엔드 통신 구현</div>
+              <div class="diff-meter">
+                <span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                <span class="diff-num">2 / 5</span>
+              </div>
+            </div>
+            <div class="diff-row">
+              <div class="diff-label">메트릭 패턴 생성</div>
+              <div class="diff-meter">
+                <span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                <span class="diff-num">2 / 5</span>
+              </div>
+            </div>
+            <div class="diff-row">
+              <div class="diff-label">Demo Conductor UI</div>
+              <div class="diff-meter">
+                <span class="dot on"></span><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span>
+                <span class="diff-num">3 / 5</span>
+              </div>
+            </div>
+            <div class="diff-row">
+              <div class="diff-label">시간 가속 모드</div>
+              <div class="diff-meter">
+                <span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                <span class="diff-num">1 / 5</span>
+              </div>
+            </div>
+            <div class="diff-row">
+              <div class="diff-label">시연 시나리오 작성</div>
+              <div class="diff-meter">
+                <span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                <span class="diff-num">2 / 5</span>
+              </div>
+            </div>
+            <div class="diff-summary">
+              <span class="key">학기 내 완성 가능성</span>
+              <span class="val">매우 높음 (85%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:8px">
+        <h4 class="sub-h">1.5 유스케이스 시연 적합도</h4>
+        <div class="uc-grid">
+          <div class="uc-card fit">
+            <div class="uc-head"><span class="uc-code">UC14</span><span class="uc-tag">최적</span></div>
+            <div class="uc-name">실시간 사용률 수집</div>
+            <div class="uc-desc">송신 토글로 MISSING, 값 변조로 형식 오류 즉시 재현.</div>
+          </div>
+          <div class="uc-card fit">
+            <div class="uc-head"><span class="uc-code">UC15</span><span class="uc-tag">최적</span></div>
+            <div class="uc-name">유휴 서버 자동 회수</div>
+            <div class="uc-desc">슬라이더로 CPU 4% 설정 → 가속 모드 → 30초 내 회수.</div>
+          </div>
+          <div class="uc-card fit">
+            <div class="uc-head"><span class="uc-code">UC18</span><span class="uc-tag">최적</span></div>
+            <div class="uc-name">서버 이상 징후 탐지</div>
+            <div class="uc-desc">평소 패턴 70% 학습 후 30%로 강제 변경, μ±2σ 이탈 유도.</div>
+          </div>
+          <div class="uc-card fit">
+            <div class="uc-head"><span class="uc-code">UC19</span><span class="uc-tag">최적</span></div>
+            <div class="uc-name">서버 건강 점수 산출</div>
+            <div class="uc-desc">P_missing·P_anomaly·P_usage 세 지표 모두 직접 제어.</div>
+          </div>
+          <div class="uc-card partial">
+            <div class="uc-head"><span class="uc-code">UC04–07</span><span class="uc-tag">독립</span></div>
+            <div class="uc-name">예약 수명주기</div>
+            <div class="uc-desc">메트릭과 무관한 흐름. 본 방식 선택과 무관하게 동일 구현.</div>
+          </div>
+          <div class="uc-card weak">
+            <div class="uc-head"><span class="uc-code">UC21</span><span class="uc-tag">약함</span></div>
+            <div class="uc-name">시스템 운영 대시보드</div>
+            <div class="uc-desc">MTBF·MTTR 그래프가 "가상 값" 인상을 줄 수 있음.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1.6 인터랙티브 시뮬레이터 -->
+      <div style="margin-top:48px" data-sim="method-1">
+        <h4 class="sub-h">
+          <span>1.6 인터랙티브 시뮬레이터</span>
+          <span class="step-count">Live · Mock Agent</span>
+        </h4>
+        <p class="sim-intro">
+          각 Mock Agent의 <strong>CPU 사용률을 슬라이더로 직접 조작</strong>하거나 송신을 토글하여, 백엔드가 어떻게 반응하는지 우측 라이브 뷰에서 확인할 수 있다. 시간 가속 모드를 켜면 UC15의 "30분 유휴 → 회수" 같은 자동화 분기가 수 초 안에 시연된다.
+        </p>
+
+        <div class="sim-grid">
+          <!-- 좌측: 컨트롤 패널 -->
+          <div class="sim-panel">
+            <div class="sim-panel-head">
+              <span class="title">Demo Conductor</span>
+              <button class="preset-btn" data-preset="uc15">UC15 시연 시작</button>
+            </div>
+
+            <div class="control-card">
+              <div class="control-head">
+                <span class="agent-name">srv-01<span class="agent-sub">gpu-a</span></span>
+                <label class="toggle" title="송신 ON/OFF">
+                  <input type="checkbox" checked data-toggle="send" data-idx="0">
+                  <span class="slider-pin"></span>
+                </label>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">CPU</span>
+                <input type="range" min="0" max="100" value="73" data-slider="cpu" data-idx="0">
+                <span class="slider-val" data-val="0">73%</span>
+              </div>
+            </div>
+
+            <div class="control-card">
+              <div class="control-head">
+                <span class="agent-name">srv-02<span class="agent-sub">gpu-b</span></span>
+                <label class="toggle" title="송신 ON/OFF">
+                  <input type="checkbox" checked data-toggle="send" data-idx="1">
+                  <span class="slider-pin"></span>
+                </label>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">CPU</span>
+                <input type="range" min="0" max="100" value="45" data-slider="cpu" data-idx="1">
+                <span class="slider-val" data-val="1">45%</span>
+              </div>
+            </div>
+
+            <div class="control-card">
+              <div class="control-head">
+                <span class="agent-name">srv-03<span class="agent-sub">cpu-only</span></span>
+                <label class="toggle" title="송신 ON/OFF">
+                  <input type="checkbox" checked data-toggle="send" data-idx="2">
+                  <span class="slider-pin"></span>
+                </label>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">CPU</span>
+                <input type="range" min="0" max="100" value="60" data-slider="cpu" data-idx="2">
+                <span class="slider-val" data-val="2">60%</span>
+              </div>
+            </div>
+
+            <div class="control-card">
+              <div class="control-head">
+                <span class="agent-name">srv-04<span class="agent-sub">gpu-c</span></span>
+                <label class="toggle" title="송신 ON/OFF">
+                  <input type="checkbox" checked data-toggle="send" data-idx="3">
+                  <span class="slider-pin"></span>
+                </label>
+              </div>
+              <div class="slider-row">
+                <span class="slider-label">CPU</span>
+                <input type="range" min="0" max="100" value="50" data-slider="cpu" data-idx="3">
+                <span class="slider-val" data-val="3">50%</span>
+              </div>
+            </div>
+
+            <div class="speed-control">
+              <span class="speed-label">시간 가속</span>
+              <div class="speed-tabs">
+                <button class="speed-btn active" data-speed="1">실시간</button>
+                <button class="speed-btn" data-speed="10">10×</button>
+                <button class="speed-btn" data-speed="60">60×</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 우측: 라이브 뷰 -->
+          <div class="sim-live">
+            <div class="sim-live-head">
+              <span class="title">Live View · Backend Reactions</span>
+              <span class="status-pill running">Running</span>
+            </div>
+
+            <div class="gauges">
+              <div class="gauge" data-gauge="0">
+                <div class="gauge-row"><span class="gauge-label">srv-01</span><span class="gauge-val">73%</span></div>
+                <div class="gauge-bar"><div class="gauge-fill" style="width:73%"></div></div>
+                <div class="gauge-status"><span class="status-tag">정상</span><span class="extra">송신 ON</span></div>
+              </div>
+              <div class="gauge" data-gauge="1">
+                <div class="gauge-row"><span class="gauge-label">srv-02</span><span class="gauge-val">45%</span></div>
+                <div class="gauge-bar"><div class="gauge-fill" style="width:45%"></div></div>
+                <div class="gauge-status"><span class="status-tag">정상</span><span class="extra">송신 ON</span></div>
+              </div>
+              <div class="gauge" data-gauge="2">
+                <div class="gauge-row"><span class="gauge-label">srv-03</span><span class="gauge-val">60%</span></div>
+                <div class="gauge-bar"><div class="gauge-fill" style="width:60%"></div></div>
+                <div class="gauge-status"><span class="status-tag">정상</span><span class="extra">송신 ON</span></div>
+              </div>
+              <div class="gauge" data-gauge="3">
+                <div class="gauge-row"><span class="gauge-label">srv-04</span><span class="gauge-val">50%</span></div>
+                <div class="gauge-bar"><div class="gauge-fill" style="width:50%"></div></div>
+                <div class="gauge-status"><span class="status-tag">정상</span><span class="extra">송신 ON</span></div>
+              </div>
+            </div>
+
+            <div class="event-log">
+              <div class="log-head">
+                <span>이벤트 로그</span>
+                <button class="clear-btn">Clear</button>
+              </div>
+              <div class="log-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============== Tab 2: 방법 2 (Docker) ============== -->
+  <div class="tab-panel" role="tabpanel" data-tab="method-2">
+    <section class="option">
+      <h2 class="section-h"><span class="num">02</span>Option B</h2>
+      <div class="opt-head">
+        <div>
+          <div class="opt-label">Docker 컨테이너</div>
+          <h3 class="option-title">실제 컨테이너에서 발생한 부하 메트릭 수집</h3>
+        </div>
+        <div class="opt-meta">
+          <div class="meta-row"><span class="label">구현 기간</span><span class="val">2–3주</span></div>
+          <div class="meta-row"><span class="label">실제 부하</span><span class="val">있음</span></div>
+          <div class="meta-row"><span class="label">통제 수준</span><span class="val">제한적</span></div>
+        </div>
+      </div>
+
+      <p class="option-tagline">
+        Docker 컨테이너 N개를 실제로 가동하고, 컨테이너 내부에서 <strong>stress-ng</strong>로 실제 CPU·메모리 부하를 발생시킨다. 백엔드는 <strong>docker stats / cgroup</strong> 인터페이스로 OS 커널이 측정한 진짜 사용률을 수집하여 사용한다.
+      </p>
+
+      <div class="figure">
+        <div class="figure-head">
+          <div class="fig-label"><span class="fig-num">Fig. 02</span>Docker 컨테이너 토폴로지</div>
+          <div class="fig-meta">
+            <span><span class="key">REAL_LOAD</span>Yes</span>
+            <span><span class="key">CONTROL</span>docker exec</span>
+          </div>
+        </div>
+        <div class="figure-body">
+          <svg class="dgm" viewBox="0 0 1000 460" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrowhead-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="#27272a"/>
+              </marker>
+            </defs>
+            <g>
+              <rect x="30" y="40" width="540" height="380" fill="none" stroke="#a1a1aa" stroke-width="1.2" stroke-dasharray="6 4" rx="4"/>
+              <text x="48" y="60" class="lbl-meta">Docker Host · 노트북</text>
+            </g>
+            <g>
+              <rect class="container-body" x="60" y="90" width="220" height="90" rx="4"/>
+              <rect class="container-stripe" x="60" y="90" width="220" height="6"/>
+              <text class="lbl-on-blue" x="80" y="125">Container · srv-01</text>
+              <text class="lbl-sub" x="80" y="144">stress-ng --cpu 4</text>
+              <text class="lbl-sub" x="80" y="162">실제 CPU 부하 (4 cores)</text>
+            </g>
+            <g>
+              <rect class="container-body" x="320" y="90" width="220" height="90" rx="4"/>
+              <rect class="container-stripe" x="320" y="90" width="220" height="6"/>
+              <text class="lbl-on-blue" x="340" y="125">Container · srv-02</text>
+              <text class="lbl-sub" x="340" y="144">stress-ng --vm 4 --io 2</text>
+              <text class="lbl-sub" x="340" y="162">메모리 · I/O 부하</text>
+            </g>
+            <g>
+              <rect class="container-body" x="60" y="200" width="220" height="90" rx="4"/>
+              <rect class="container-stripe" x="60" y="200" width="220" height="6"/>
+              <text class="lbl-on-blue" x="80" y="235">Container · srv-03</text>
+              <text class="lbl-sub" x="80" y="254">idle (대기)</text>
+              <text class="lbl-sub" x="80" y="272">UC15 회수 대상</text>
+            </g>
+            <g>
+              <rect class="container-body" x="320" y="200" width="220" height="90" rx="4"/>
+              <rect class="container-stripe" x="320" y="200" width="220" height="6"/>
+              <text class="lbl-on-blue" x="340" y="235">Container · srv-04</text>
+              <text class="lbl-sub" x="340" y="254">cyclic (주기적 부하)</text>
+              <text class="lbl-sub" x="340" y="272">UC18 시연 대상</text>
+            </g>
+            <g>
+              <rect class="n-rect-soft" x="60" y="310" width="480" height="70" rx="3"/>
+              <text class="lbl-title" x="300" y="340" text-anchor="middle">docker stats API · /sys/fs/cgroup</text>
+              <text class="lbl-sub" x="300" y="358" text-anchor="middle">OS 커널이 측정한 실제 CPU · 메모리 · 네트워크 사용률</text>
+            </g>
+            <g>
+              <rect class="n-rect-accent" x="600" y="180" width="160" height="84" rx="4"/>
+              <text class="lbl-blue" x="680" y="208" text-anchor="middle">Metric Collector</text>
+              <text class="lbl-sub" x="680" y="226" text-anchor="middle">5초 polling</text>
+              <text class="lbl-sub" x="680" y="244" text-anchor="middle">POST /metrics</text>
+            </g>
+            <g>
+              <rect class="core" x="790" y="120" width="180" height="280" rx="4"/>
+              <text class="lbl-title" x="880" y="146" text-anchor="middle">Backend · Spring Boot</text>
+              <text class="lbl-sub" x="880" y="163" text-anchor="middle">우리 시스템</text>
+              <rect class="n-rect-soft" x="808" y="190" width="144" height="38" rx="3"/>
+              <text class="lbl-title" x="880" y="214" text-anchor="middle">UC14 수집기</text>
+              <rect class="n-rect-soft" x="808" y="240" width="144" height="38" rx="3"/>
+              <text class="lbl-title" x="880" y="264" text-anchor="middle">UC15 / 18 / 19</text>
+              <rect class="n-rect-dashed" x="808" y="290" width="144" height="94" rx="3"/>
+              <text class="lbl-title" x="880" y="314" text-anchor="middle">대시보드 UC21</text>
+              <text class="lbl-sub" x="880" y="332" text-anchor="middle">실제 부하</text>
+              <text class="lbl-sub" x="880" y="348" text-anchor="middle">실제 응답시간</text>
+              <text class="lbl-sub" x="880" y="364" text-anchor="middle">실제 장애</text>
+            </g>
+            <path class="arrow" d="M 170 184 L 200 304"/>
+            <path class="arrow" d="M 430 184 L 400 304"/>
+            <path class="arrow" d="M 170 294 L 200 308"/>
+            <path class="arrow" d="M 430 294 L 400 308"/>
+            <path class="arrow" d="M 540 340 C 580 340 600 270 600 226"/>
+            <path class="arrow" d="M 760 220 L 790 210"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <div>
+          <h4 class="sub-h"><span>2.1 작동 원리</span><span class="step-count">5단계</span></h4>
+          <ol class="steps">
+            <li><span>호스트 1대(노트북)에 Docker를 설치하고 <code>docker-compose.yml</code>로 4–6개 컨테이너 정의.</span></li>
+            <li><span>각 컨테이너에는 <code>stress-ng</code>가 사전 설치되어 있으며, 시연 중 <code>docker exec srv-01 stress-ng --cpu 4</code>로 실제 부하 발생.</span></li>
+            <li><span>Metric Collector가 <code>docker stats --no-stream</code>을 5초 주기로 호출하여 <strong>cgroup이 측정한 실제 사용률</strong> 수신.</span></li>
+            <li><span>Collector가 수신값을 <code>POST /metrics</code>로 백엔드에 전달. 이후 흐름은 Option A와 동일.</span></li>
+            <li><span>UC15 시연 시 시연자는 srv-03을 idle 상태로 두거나 <code>docker pause srv-03</code>으로 CPU를 0%로 강제.</span></li>
+          </ol>
+        </div>
+
+        <div>
+          <h4 class="sub-h"><span>2.2 기술 스택</span><span class="step-count">6 components</span></h4>
+          <div class="stack-grid">
+            <div class="stack-card">
+              <div class="role">컨테이너 런타임</div>
+              <div class="tech">Docker + Compose</div>
+              <div class="note">표준화된 환경. 모든 OS 지원.</div>
+            </div>
+            <div class="stack-card">
+              <div class="role">부하 도구</div>
+              <div class="tech">stress-ng</div>
+              <div class="note">CPU·메모리·I/O·네트워크 모두 가능.</div>
+            </div>
+            <div class="stack-card">
+              <div class="role">메트릭 수집</div>
+              <div class="tech">docker stats / cAdvisor</div>
+              <div class="note">Prometheus 호환 메트릭 노출 가능.</div>
+            </div>
+            <div class="stack-card">
+              <div class="role">수집기 언어</div>
+              <div class="tech">Go 또는 Python</div>
+              <div class="note">Docker SDK 가장 잘 지원하는 언어.</div>
+            </div>
+            <div class="stack-card">
+              <div class="role">시간 가속</div>
+              <div class="tech">제한적</div>
+              <div class="note">스케줄러만 가속, 실제 부하 시간은 불가.</div>
+            </div>
+            <div class="stack-card">
+              <div class="role">실행 환경</div>
+              <div class="tech">8 GB+ RAM</div>
+              <div class="note">컨테이너 + 백엔드 + 프론트 동시 가동.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <div>
+          <h4 class="sub-h">2.3 장단점 분석</h4>
+          <div class="pros-cons">
+            <div class="pros">
+              <div class="pc-head">Strengths</div>
+              <ul>
+                <li><strong>발표 임팩트가 강함.</strong> "실제로 동작하고 있다"는 시각적 증거 확보.</li>
+                <li>OS 표준 메트릭 인터페이스 사용 → 실제 운영 환경과 유사한 데이터 경로.</li>
+                <li>네트워크 단절·컨테이너 종료 등 <strong>현실적 장애</strong> 시연 가능(<code>docker kill</code>).</li>
+                <li>UC21 가용성(MTBF·MTTR) 그래프가 실제 의미를 가짐.</li>
+                <li>산업 표준 도구 경험이 포트폴리오에 그대로 반영.</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <div class="pc-head">Weaknesses</div>
+              <ul>
+                <li>시간 통제 불가 — UC15의 "30분 유휴" 시연은 결국 스케줄러 가속에 의존.</li>
+                <li>발표자 환경에 따라 결과가 변동. 부하 시 다른 컨테이너 영향 가능성.</li>
+                <li>Docker 설치 및 OS별 권한 차이로 <strong>환경 셋업에 시간 소요</strong>.</li>
+                <li>형식 오류 등 미세 실패 분기는 재현이 까다로움.</li>
+                <li>코드 및 운영 부담이 Option A의 1.5~2배.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="sub-h">2.4 구현 난이도</h4>
+          <div class="difficulty">
+            <div class="diff-row">
+              <div class="diff-label">Docker / Compose 구성</div>
+              <div class="diff-meter">
+                <span class="dot on"></span><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span>
+                <span class="diff-num">3 / 5</span>
+              </div>
+            </div>
+            <div class="diff-row">
+              <div class="diff-label">메트릭 수집기 구현</div>
+              <div class="diff-meter">
+                <span class="dot on"></span><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span>
+                <span class="diff-num">3 / 5</span>
+              </div>
+            </div>
+            <div class="diff-row">
+              <div class="diff-label">환경 일관성 확보</div>
+              <div class="diff-meter">
+                <span class="dot on high"></span><span class="dot on high"></span><span class="dot on high"></span><span class="dot on high"></span><span class="dot"></span>
+                <span class="diff-num">4 / 5</span>
+              </div>
+            </div>
+            <div class="diff-row">
+              <div class="diff-label">시연 시간 압축</div>
+              <div class="diff-meter">
+                <span class="dot on high"></span><span class="dot on high"></span><span class="dot on high"></span><span class="dot on high"></span><span class="dot"></span>
+                <span class="diff-num">4 / 5</span>
+              </div>
+            </div>
+            <div class="diff-row">
+              <div class="diff-label">디버깅 복잡도</div>
+              <div class="diff-meter">
+                <span class="dot on"></span><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span><span class="dot"></span>
+                <span class="diff-num">4 / 5</span>
+              </div>
+            </div>
+            <div class="diff-summary">
+              <span class="key">학기 내 완성 가능성</span>
+              <span class="val">중간 (60%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:8px">
+        <h4 class="sub-h">2.5 유스케이스 시연 적합도</h4>
+        <div class="uc-grid">
+          <div class="uc-card fit">
+            <div class="uc-head"><span class="uc-code">UC14</span><span class="uc-tag">최적</span></div>
+            <div class="uc-name">실시간 사용률 수집</div>
+            <div class="uc-desc">실제 cgroup 메트릭을 그대로 시연. 임팩트 우수.</div>
+          </div>
+          <div class="uc-card fit">
+            <div class="uc-head"><span class="uc-code">UC18</span><span class="uc-tag">최적</span></div>
+            <div class="uc-name">서버 이상 징후 탐지</div>
+            <div class="uc-desc">실제 부하 그래프로 μ±2σ 이탈을 시각화. 설득력 최상.</div>
+          </div>
+          <div class="uc-card fit">
+            <div class="uc-head"><span class="uc-code">UC21</span><span class="uc-tag">최적</span></div>
+            <div class="uc-name">시스템 운영 대시보드</div>
+            <div class="uc-desc"><code style="font-size:11.5px;background:var(--bg-3);padding:1px 5px;border-radius:2px">docker kill</code>로 실제 다운타임, MTBF/MTTR 정확 측정.</div>
+          </div>
+          <div class="uc-card partial">
+            <div class="uc-head"><span class="uc-code">UC15</span><span class="uc-tag">조건부</span></div>
+            <div class="uc-name">유휴 서버 자동 회수</div>
+            <div class="uc-desc">가능하나 "30분 유휴" 시간 압축에 스케줄러 가속 필요.</div>
+          </div>
+          <div class="uc-card weak">
+            <div class="uc-head"><span class="uc-code">UC14 [E2]</span><span class="uc-tag">약함</span></div>
+            <div class="uc-name">형식 오류 처리</div>
+            <div class="uc-desc">정상 컨테이너는 잘못된 값을 보내지 않음. 별도 mock 필요.</div>
+          </div>
+          <div class="uc-card weak">
+            <div class="uc-head"><span class="uc-code">UC17</span><span class="uc-tag">약함</span></div>
+            <div class="uc-name">승인 72시간 타임아웃</div>
+            <div class="uc-desc">실제 시간을 기다릴 수 없는 점은 양 방식 공통 한계.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2.6 인터랙티브 시뮬레이터 -->
+      <div style="margin-top:48px" data-sim="method-2">
+        <h4 class="sub-h">
+          <span>2.6 인터랙티브 시뮬레이터</span>
+          <span class="step-count">Live · Docker Host</span>
+        </h4>
+        <p class="sim-intro">
+          <strong>실제 시연 환경의 명령어를 모사한 버튼</strong>으로 각 컨테이너에 부하를 발생시키거나 종료시킨다. 우측 라이브 뷰는 <code style="font-family:var(--mono);background:var(--bg-2);padding:1px 5px;border-radius:3px;border:1px solid var(--border);font-size:.92em">docker stats</code>가 측정한 사용률과 백엔드의 자동 반응을 표시한다.
+        </p>
+
+        <div class="sim-grid">
+          <!-- 좌측: 컨트롤 패널 -->
+          <div class="sim-panel">
+            <div class="sim-panel-head">
+              <span class="title">Docker Exec Console</span>
+              <button class="preset-btn" data-preset="uc15">UC21 장애 시연</button>
+            </div>
+
+            <div class="control-card">
+              <div class="control-head">
+                <span class="agent-name">srv-01<span class="agent-sub">container</span></span>
+              </div>
+              <div class="action-row">
+                <button class="action-btn primary" data-action="cpu-stress" data-idx="0">CPU Stress</button>
+                <button class="action-btn amber" data-action="mem-stress" data-idx="0">Mem Stress</button>
+                <button class="action-btn" data-action="idle" data-idx="0">Stop Load</button>
+                <button class="action-btn" data-action="pause" data-idx="0">Pause</button>
+                <button class="action-btn danger" data-action="kill" data-idx="0">Kill</button>
+              </div>
+            </div>
+
+            <div class="control-card">
+              <div class="control-head">
+                <span class="agent-name">srv-02<span class="agent-sub">container</span></span>
+              </div>
+              <div class="action-row">
+                <button class="action-btn primary" data-action="cpu-stress" data-idx="1">CPU Stress</button>
+                <button class="action-btn amber" data-action="mem-stress" data-idx="1">Mem Stress</button>
+                <button class="action-btn" data-action="idle" data-idx="1">Stop Load</button>
+                <button class="action-btn" data-action="pause" data-idx="1">Pause</button>
+                <button class="action-btn danger" data-action="kill" data-idx="1">Kill</button>
+              </div>
+            </div>
+
+            <div class="control-card">
+              <div class="control-head">
+                <span class="agent-name">srv-03<span class="agent-sub">container</span></span>
+              </div>
+              <div class="action-row">
+                <button class="action-btn primary" data-action="cpu-stress" data-idx="2">CPU Stress</button>
+                <button class="action-btn amber" data-action="mem-stress" data-idx="2">Mem Stress</button>
+                <button class="action-btn" data-action="idle" data-idx="2">Stop Load</button>
+                <button class="action-btn" data-action="pause" data-idx="2">Pause</button>
+                <button class="action-btn danger" data-action="kill" data-idx="2">Kill</button>
+              </div>
+            </div>
+
+            <div class="control-card">
+              <div class="control-head">
+                <span class="agent-name">srv-04<span class="agent-sub">container</span></span>
+              </div>
+              <div class="action-row">
+                <button class="action-btn primary" data-action="cpu-stress" data-idx="3">CPU Stress</button>
+                <button class="action-btn amber" data-action="mem-stress" data-idx="3">Mem Stress</button>
+                <button class="action-btn" data-action="idle" data-idx="3">Stop Load</button>
+                <button class="action-btn" data-action="pause" data-idx="3">Pause</button>
+                <button class="action-btn danger" data-action="kill" data-idx="3">Kill</button>
+              </div>
+            </div>
+
+            <div class="speed-control">
+              <span class="speed-label">스케줄러 가속</span>
+              <div class="speed-tabs">
+                <button class="speed-btn active" data-speed="1">실시간</button>
+                <button class="speed-btn" data-speed="10">10×</button>
+                <button class="speed-btn" data-speed="60">60×</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 우측: 라이브 뷰 -->
+          <div class="sim-live">
+            <div class="sim-live-head">
+              <span class="title">Live View · docker stats + Backend</span>
+              <span class="status-pill running">Running</span>
+            </div>
+
+            <div class="gauges">
+              <div class="gauge" data-gauge="0">
+                <div class="gauge-row"><span class="gauge-label">srv-01</span><span class="gauge-val">5%</span></div>
+                <div class="gauge-bar"><div class="gauge-fill idle" style="width:5%"></div></div>
+                <div class="gauge-status"><span class="status-tag idle">유휴</span><span class="extra">mem 10%</span></div>
+              </div>
+              <div class="gauge" data-gauge="1">
+                <div class="gauge-row"><span class="gauge-label">srv-02</span><span class="gauge-val">5%</span></div>
+                <div class="gauge-bar"><div class="gauge-fill idle" style="width:5%"></div></div>
+                <div class="gauge-status"><span class="status-tag idle">유휴</span><span class="extra">mem 10%</span></div>
+              </div>
+              <div class="gauge" data-gauge="2">
+                <div class="gauge-row"><span class="gauge-label">srv-03</span><span class="gauge-val">5%</span></div>
+                <div class="gauge-bar"><div class="gauge-fill idle" style="width:5%"></div></div>
+                <div class="gauge-status"><span class="status-tag idle">유휴</span><span class="extra">mem 10%</span></div>
+              </div>
+              <div class="gauge" data-gauge="3">
+                <div class="gauge-row"><span class="gauge-label">srv-04</span><span class="gauge-val">5%</span></div>
+                <div class="gauge-bar"><div class="gauge-fill idle" style="width:5%"></div></div>
+                <div class="gauge-status"><span class="status-tag idle">유휴</span><span class="extra">mem 10%</span></div>
+              </div>
+            </div>
+
+            <div class="event-log">
+              <div class="log-head">
+                <span>Container & Backend Events</span>
+                <button class="clear-btn">Clear</button>
+              </div>
+              <div class="log-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============== Tab 3: 비교 및 결정 ============== -->
+  <div class="tab-panel" role="tabpanel" data-tab="compare">
+
+    <!-- 비교 매트릭스 -->
+    <section class="compare-block matrix-section">
+      <h2 class="section-h"><span class="num">03.1</span>Comparison Matrix</h2>
+      <h3 class="section-title">10개 기준에 의한 정량 비교</h3>
+      <p class="section-sub">두 방식을 학기 프로젝트 관점에서 평가하는 데 가장 중요한 10개 기준에 대한 평가. "우세(Better)" 표시는 각 기준 내에서의 상대적 우위를 의미한다.</p>
+
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th>평가 기준</th>
+            <th class="col">A · Mock Agent</th>
+            <th class="col">B · Docker</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th>실제 부하 발생</th>
+            <td>가상 메트릭만 송출.</td>
+            <td class="better">실제 CPU·메모리 부하 발생.</td>
+          </tr>
+          <tr>
+            <th>시나리오 통제</th>
+            <td class="better">슬라이더 하나로 모든 값 제어.</td>
+            <td>OS·시간에 의존, 제한적.</td>
+          </tr>
+          <tr>
+            <th>발표 임팩트</th>
+            <td>"가상값" 인상.</td>
+            <td class="better">"실제 동작" 임팩트.</td>
+          </tr>
+          <tr>
+            <th>구현 난이도</th>
+            <td class="better">낮음. 약 1–2주.</td>
+            <td>중간. 약 2–3주 + 환경 셋업.</td>
+          </tr>
+          <tr>
+            <th>재현성</th>
+            <td class="better">시드 고정 시 100%.</td>
+            <td>OS 상태에 따라 변동.</td>
+          </tr>
+          <tr>
+            <th>실패 분기 재현</th>
+            <td class="better">버튼 한 번에 모든 분기 재현.</td>
+            <td>컨테이너 단위는 가능, 미세 분기는 어려움.</td>
+          </tr>
+          <tr>
+            <th>가용성(MTBF/MTTR) 신뢰도</th>
+            <td>계산은 되나 입력이 가상.</td>
+            <td class="better">실제 장애 → 실제 측정값.</td>
+          </tr>
+          <tr>
+            <th>장비 요구사항</th>
+            <td class="better">일반 노트북.</td>
+            <td>8 GB+ RAM, Docker 동작 환경.</td>
+          </tr>
+          <tr>
+            <th>학기 내 완성 가능성</th>
+            <td class="better">매우 높음 (85%).</td>
+            <td>중간 (60%). 셋업 변수 존재.</td>
+          </tr>
+          <tr>
+            <th>학습 효과 (산업 도구)</th>
+            <td>Python·HTTP 중심.</td>
+            <td class="better">Docker·cgroup·stress-ng 실전.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 하이브리드 -->
+    <section class="compare-block hybrid">
+      <span class="hb-tag">Recommended Approach</span>
+      <h2>제3안 · 하이브리드 구성</h2>
+      <p>
+        서버 4대 중 <strong>2대는 Docker 컨테이너 + stress-ng로 실제 부하</strong>, 나머지 <strong>2대는 Mock Agent로 시나리오 통제</strong>를 담당하는 절충 방식. 시연 시 발표자는 "이쪽은 실제 컨테이너에서 부하를 발생시키는 환경입니다"라고 안내한 후, 통제가 까다로운 시나리오(정확한 CPU 4% 유지·송신 형식 오류·30분 유휴)는 Mock 측에서 재현한다.
+      </p>
+      <p>
+        구현 부담은 Option B와 유사하나, <strong>Mock Agent가 독립적으로 동작하므로 시연 사고 발생 시 대체 가능</strong>하다는 안전성이 추가된다. 산업 도구 경험과 시연 안정성을 동시에 확보한다.
+      </p>
+      <div class="hb-grid">
+        <div class="hb-card">
+          <div class="role">srv-01 · srv-02</div>
+          <div class="h">Docker / 실제 부하</div>
+          <div class="d">UC14·UC18·UC21의 신뢰도 담당. 발표 시 실제 CPU 점유율 시각화.</div>
+        </div>
+        <div class="hb-card">
+          <div class="role">srv-03 · srv-04</div>
+          <div class="h">Mock Agent / 시나리오</div>
+          <div class="d">UC15 유휴 회수, UC14 [E1]/[E2] 분기 등 통제 시나리오 담당.</div>
+        </div>
+        <div class="hb-card">
+          <div class="role">공통 인터페이스</div>
+          <div class="h">Demo Conductor</div>
+          <div class="d">두 종류 서버를 단일 UI에서 일관되게 제어. 발표자 시점에서는 구분 없음.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 의사결정 -->
+    <section class="compare-block decision">
+      <h2 class="section-h"><span class="num">03.2</span>Decision Guide</h2>
+      <h3 class="section-title">팀 내부 의사결정을 위한 판단 기준</h3>
+      <p class="section-sub">팀원 구성, 일정 여유, 시연 목표에 따라 선택이 달라진다. 다음은 각 방식이 적합한 조건을 정리한 것이다.</p>
+
+      <div class="dec-grid">
+        <div class="dec-card">
+          <div class="dec-h">A · Mock Agent 권장 조건</div>
+          <div class="dec-name">시연 안정성과 통제가 최우선일 때</div>
+          <div class="dec-desc">팀 내 Docker 경험자가 부족하고, 발표 시연 안정성이 최우선이며, UC14~UC19의 자동화 분기를 정확히 시각화하는 것이 목표인 경우. <strong>학기 일정이 빡빡한 상황에서 가장 안전한 선택지.</strong></div>
+        </div>
+        <div class="dec-card">
+          <div class="dec-h">B · Docker 권장 조건</div>
+          <div class="dec-name">발표 임팩트와 학습 효과가 우선일 때</div>
+          <div class="dec-desc">팀원 절반 이상이 Docker에 익숙하고, "실제 동작" 임팩트가 평가에 결정적이며, 산업 도구 경험을 이력에 남기고자 하는 경우. <strong>구현 시간이 충분할 때 가장 매력적인 선택지.</strong></div>
+        </div>
+        <div class="dec-card">
+          <div class="dec-h">Hybrid 권장 조건</div>
+          <div class="dec-name">양쪽 장점을 모두 확보하고 싶을 때</div>
+          <div class="dec-desc">팀원 2–3명이 Docker 셋업을, 나머지가 Mock Agent를 병렬로 진행할 수 있는 경우. <strong>일정 위험이 존재할 때 어느 한쪽이라도 시연 가능하다는 보험을 갖는 구성.</strong></div>
+        </div>
+        <div class="dec-card">
+          <div class="dec-h">공통 다음 단계</div>
+          <div class="dec-name">방식 결정 후 즉시 진행할 작업</div>
+          <div class="dec-desc">① 백엔드에 <code>SCHEDULE_TICK_SECONDS</code> 가속 모드 우선 구현. ② Demo Conductor 또는 docker-compose를 가장 먼저 만들어 자동화 UC 검증 일찍 시작. ③ <strong>UC04–07 예약 흐름은 두 방식 모두에 영향 없으므로 메트릭 결정과 무관하게 병렬 진행 가능.</strong></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ============== 푸터 ============== -->
+  <footer class="foot">
+    <div>
+      <strong>서버 예약/할당 관리 시스템</strong> · 4조 내부 문서 · 2026.05.19
+    </div>
+    <div>
+      참조 · 유스케이스 명세서 UC14·UC15·UC18·UC19·UC21
+    </div>
+  </footer>
+</div>
+
+<script>
+  const validTabs = ['method-1', 'method-2', 'compare'];
+  const tabs = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.tab-panel');
+
+  function activate(name) {
+    if (!validTabs.includes(name)) name = 'method-1';
+    tabs.forEach(t => {
+      const isActive = t.dataset.tab === name;
+      t.classList.toggle('active', isActive);
+      t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    panels.forEach(p => {
+      p.classList.toggle('active', p.dataset.tab === name);
+    });
+    if (window.location.hash !== '#' + name) {
+      history.replaceState(null, '', '#' + name);
+    }
+  }
+
+  tabs.forEach(t => {
+    t.addEventListener('click', () => activate(t.dataset.tab));
+  });
+
+  // URL hash로 초기 진입 가능
+  const initial = window.location.hash.replace('#', '');
+  if (initial) activate(initial);
+</script>
+
+<script>
+  // ============== 인터랙티브 시뮬레이터 ==============
+  (function() {
+    const SIM = {
+      'method-1': {
+        items: [
+          { id: 'srv-01', name: 'srv-01', cpu: 73, targetCpu: 73, mem: 40, sending: true, state: 'normal', idleStart: null, idleWarned: false, history: [] },
+          { id: 'srv-02', name: 'srv-02', cpu: 45, targetCpu: 45, mem: 35, sending: true, state: 'normal', idleStart: null, idleWarned: false, history: [] },
+          { id: 'srv-03', name: 'srv-03', cpu: 60, targetCpu: 60, mem: 50, sending: true, state: 'normal', idleStart: null, idleWarned: false, history: [] },
+          { id: 'srv-04', name: 'srv-04', cpu: 50, targetCpu: 50, mem: 30, sending: true, state: 'normal', idleStart: null, idleWarned: false, history: [] }
+        ],
+        speed: 1, log: [], tick: 0, mode: 'mock'
+      },
+      'method-2': {
+        items: [
+          { id: 'srv-01', name: 'srv-01', cpu: 5, targetCpu: 5, mem: 10, targetMem: 10, sending: true, state: 'idle', idleStart: null, idleWarned: false, history: [] },
+          { id: 'srv-02', name: 'srv-02', cpu: 5, targetCpu: 5, mem: 10, targetMem: 10, sending: true, state: 'idle', idleStart: null, idleWarned: false, history: [] },
+          { id: 'srv-03', name: 'srv-03', cpu: 5, targetCpu: 5, mem: 10, targetMem: 10, sending: true, state: 'idle', idleStart: null, idleWarned: false, history: [] },
+          { id: 'srv-04', name: 'srv-04', cpu: 5, targetCpu: 5, mem: 10, targetMem: 10, sending: true, state: 'idle', idleStart: null, idleWarned: false, history: [] }
+        ],
+        speed: 1, log: [], tick: 0, mode: 'docker'
+      }
+    };
+
+    function fmtTime(t) {
+      const d = new Date(t);
+      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+    }
+
+    function addLog(key, uc, msg) {
+      const sim = SIM[key];
+      sim.log.unshift({ t: Date.now(), uc, msg });
+      if (sim.log.length > 40) sim.log.pop();
+      renderLog(key);
+    }
+
+    function renderLog(key) {
+      const list = document.querySelector(`[data-sim="${key}"] .log-list`);
+      if (!list) return;
+      const sim = SIM[key];
+      if (sim.log.length === 0) {
+        list.innerHTML = '<div class="log-empty">컨트롤을 조작하면 백엔드 반응이 이곳에 표시됩니다.</div>';
+        return;
+      }
+      list.innerHTML = sim.log.map(item => `
+        <div class="log-item">
+          <span class="log-time">${fmtTime(item.t)}</span>
+          <span class="log-uc ${item.uc.toLowerCase()}">${item.uc}</span>
+          <span class="log-msg">${item.msg}</span>
+        </div>
+      `).join('');
+    }
+
+    function getStatus(item) {
+      if (item.state === 'killed') return { label: 'KILLED', cls: 'killed', fill: 'danger' };
+      if (item.state === 'paused') return { label: 'PAUSED', cls: 'paused', fill: 'idle' };
+      if (!item.sending) return { label: '미수신', cls: 'idle', fill: 'idle' };
+      if (item.cpu < 5) return { label: '유휴 후보', cls: 'idle', fill: 'idle' };
+      if (item.cpu < 20) return { label: '낮음', cls: 'idle', fill: '' };
+      if (item.cpu < 70) return { label: '정상', cls: '', fill: '' };
+      if (item.cpu < 90) return { label: '주의', cls: 'warning', fill: 'warning' };
+      return { label: '높음', cls: 'danger', fill: 'danger' };
+    }
+
+    function renderGauges(key) {
+      const sim = SIM[key];
+      sim.items.forEach((it, i) => {
+        const root = document.querySelector(`[data-sim="${key}"] [data-gauge="${i}"]`);
+        if (!root) return;
+        const fill = root.querySelector('.gauge-fill');
+        const valEl = root.querySelector('.gauge-val');
+        const statusTag = root.querySelector('.status-tag');
+        const extra = root.querySelector('.extra');
+
+        const s = getStatus(it);
+        fill.style.width = it.cpu + '%';
+        fill.className = 'gauge-fill ' + s.fill;
+        valEl.textContent = Math.round(it.cpu) + '%';
+        statusTag.textContent = s.label;
+        statusTag.className = 'status-tag ' + s.cls;
+        if (extra) {
+          if (sim.mode === 'docker') {
+            extra.textContent = `mem ${Math.round(it.mem)}%`;
+          } else {
+            extra.textContent = it.sending ? '송신 ON' : '송신 OFF';
+          }
+        }
+      });
+    }
+
+    function doTick(key) {
+      const sim = SIM[key];
+      sim.tick++;
+
+      // 사용률 자연스러운 수렴 + 노이즈
+      sim.items.forEach(it => {
+        if (it.state === 'killed') { it.cpu = 0; it.mem = 0; return; }
+        if (it.state === 'paused') { it.cpu = 0; it.mem = Math.max(0, it.mem * 0.95); return; }
+        const diff = it.targetCpu - it.cpu;
+        it.cpu += diff * 0.25 + (Math.random() - 0.5) * 3;
+        it.cpu = Math.max(0, Math.min(100, it.cpu));
+        if (sim.mode === 'docker') {
+          const diffM = (it.targetMem || 10) - it.mem;
+          it.mem += diffM * 0.2 + (Math.random() - 0.5) * 2;
+          it.mem = Math.max(0, Math.min(100, it.mem));
+        }
+      });
+
+      // UC14 — 매 5틱마다 수집 로그
+      if (sim.tick % 5 === 0) {
+        const recv = sim.items.filter(it => it.sending && it.state !== 'killed').length;
+        const total = sim.items.length;
+        const missing = sim.items.filter(it => !it.sending || it.state === 'killed').map(it => it.id);
+        if (recv === total) {
+          addLog(key, 'UC14', `메트릭 수집 완료 — <strong>${recv}/${total}</strong> 서버 정상 수신`);
+        } else {
+          addLog(key, 'UC14', `<strong>[E1] 응답 없음</strong> — ${missing.join(', ')} MISSING 기록 (${recv}/${total})`);
+        }
+      }
+
+      // UC15 — 유휴 5% 미만 30틱 → 경고, 45틱 → 회수
+      sim.items.forEach(it => {
+        const isIdle = it.cpu < 5 && it.sending && it.state !== 'paused' && it.state !== 'killed';
+        if (isIdle) {
+          if (it.idleStart === null) {
+            it.idleStart = sim.tick;
+            addLog(key, 'UC15', `${it.id} CPU 5% 미만 감지 — 유휴 타이머 시작`);
+          } else {
+            const elapsed = sim.tick - it.idleStart;
+            if (elapsed === 20 && !it.idleWarned) {
+              it.idleWarned = true;
+              addLog(key, 'UC15', `${it.id} 유휴 지속 — <strong>회수 경고</strong> 학생(STU)에게 알림 발송`);
+            }
+            if (elapsed === 30) {
+              addLog(key, 'UC15', `${it.id} <strong>자동 회수 완료</strong> — Reservation RECLAIMED, Server AVAILABLE, Quota 회복`);
+              it.idleStart = null;
+              it.idleWarned = false;
+            }
+          }
+        } else {
+          if (it.idleStart !== null && it.idleWarned) {
+            addLog(key, 'UC15', `${it.id} 사용률 회복 — 회수 취소`);
+          }
+          it.idleStart = null;
+          it.idleWarned = false;
+        }
+      });
+
+      // UC18 — 매 12틱마다 이상 탐지
+      if (sim.tick % 12 === 0) {
+        sim.items.forEach(it => {
+          if (it.state === 'killed' || !it.sending) return;
+          it.history.push(it.cpu);
+          if (it.history.length > 40) it.history.shift();
+          if (it.history.length >= 12) {
+            const mean = it.history.reduce((a,b) => a+b, 0) / it.history.length;
+            const std = Math.sqrt(it.history.reduce((a,b) => a + (b-mean)**2, 0) / it.history.length);
+            if (std > 6 && Math.abs(it.cpu - mean) > 2 * std) {
+              addLog(key, 'UC18', `${it.id} 이상 징후 감지 — current=<strong>${Math.round(it.cpu)}%</strong>, μ=${Math.round(mean)}%, σ=${std.toFixed(1)} (μ±2σ 이탈)`);
+            }
+          }
+        });
+      }
+
+      // UC21 (Docker만) — 컨테이너 종료 이벤트
+      // (kill 시 즉시 로그됨)
+
+      renderGauges(key);
+    }
+
+    function bindControls(key) {
+      const root = document.querySelector(`[data-sim="${key}"]`);
+      if (!root) return;
+      const sim = SIM[key];
+
+      // 슬라이더 (method-1)
+      root.querySelectorAll('[data-slider="cpu"]').forEach(sl => {
+        sl.addEventListener('input', e => {
+          const i = parseInt(e.target.dataset.idx);
+          sim.items[i].targetCpu = parseInt(e.target.value);
+          const valEl = root.querySelector(`[data-val="${i}"]`);
+          if (valEl) valEl.textContent = e.target.value + '%';
+        });
+      });
+
+      // 송신 토글
+      root.querySelectorAll('[data-toggle="send"]').forEach(tg => {
+        tg.addEventListener('change', e => {
+          const i = parseInt(e.target.dataset.idx);
+          sim.items[i].sending = e.target.checked;
+          if (e.target.checked) {
+            addLog(key, 'SYS', `${sim.items[i].id} 송신 재개`);
+          } else {
+            addLog(key, 'SYS', `${sim.items[i].id} 송신 중단 — <strong>UC14 [E1]</strong> 시나리오 시작`);
+          }
+        });
+      });
+
+      // 액션 버튼 (method-2)
+      root.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const i = parseInt(btn.dataset.idx);
+          const it = sim.items[i];
+          const action = btn.dataset.action;
+          switch (action) {
+            case 'cpu-stress':
+              it.targetCpu = 92 + Math.random() * 6;
+              it.state = 'running';
+              addLog(key, 'SYS', `<code>docker exec ${it.id} stress-ng --cpu 4</code> 실행 — CPU 부하 시작`);
+              break;
+            case 'mem-stress':
+              it.targetCpu = 55 + Math.random() * 10;
+              it.targetMem = 80;
+              it.state = 'running';
+              addLog(key, 'SYS', `<code>docker exec ${it.id} stress-ng --vm 4</code> 실행 — 메모리 부하`);
+              break;
+            case 'idle':
+              it.targetCpu = 3;
+              it.targetMem = 10;
+              it.state = 'idle';
+              addLog(key, 'SYS', `${it.id} 부하 해제 — 유휴 상태 전환`);
+              break;
+            case 'pause':
+              if (it.state === 'paused') {
+                it.state = 'idle';
+                it.targetCpu = 5;
+                addLog(key, 'SYS', `<code>docker unpause ${it.id}</code> — 컨테이너 재개`);
+              } else {
+                it.state = 'paused';
+                addLog(key, 'SYS', `<code>docker pause ${it.id}</code> — 컨테이너 일시 정지`);
+              }
+              break;
+            case 'kill':
+              it.state = 'killed';
+              it.cpu = 0;
+              it.mem = 0;
+              addLog(key, 'UC21', `<code>docker kill ${it.id}</code> — 컨테이너 강제 종료, <strong>다운타임 기록 시작</strong>`);
+              break;
+          }
+        });
+      });
+
+      // 속도
+      root.querySelectorAll('.speed-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          root.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          sim.speed = parseInt(btn.dataset.speed);
+          const label = sim.speed === 1 ? '실시간' : sim.speed + '×';
+          addLog(key, 'SYS', `스케줄러 가속 — <strong>${label}</strong>`);
+        });
+      });
+
+      // 로그 클리어
+      const clearBtn = root.querySelector('.clear-btn');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          sim.log = [];
+          renderLog(key);
+        });
+      }
+
+      // 프리셋
+      const presetBtn = root.querySelector('[data-preset]');
+      if (presetBtn) {
+        presetBtn.addEventListener('click', () => {
+          const preset = presetBtn.dataset.preset;
+          if (key === 'method-1' && preset === 'uc15') {
+            // srv-03을 4%로
+            sim.items[2].targetCpu = 4;
+            const slider = root.querySelector('[data-slider="cpu"][data-idx="2"]');
+            const val = root.querySelector('[data-val="2"]');
+            if (slider) slider.value = 4;
+            if (val) val.textContent = '4%';
+            // 60x 가속
+            sim.speed = 60;
+            root.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', b.dataset.speed === '60'));
+            addLog(key, 'SYS', `<strong>UC15 시연 시작</strong> — srv-03 CPU 4%, 60× 가속`);
+          }
+          if (key === 'method-2' && preset === 'uc15') {
+            // srv-01 부하 → kill
+            sim.items[0].state = 'running';
+            sim.items[0].targetCpu = 88;
+            addLog(key, 'SYS', `<code>docker exec srv-01 stress-ng --cpu 4</code> 자동 실행`);
+            setTimeout(() => {
+              sim.items[0].state = 'killed';
+              sim.items[0].cpu = 0;
+              addLog(key, 'UC21', `<strong>srv-01 컨테이너 비정상 종료</strong> — UC21 가용성 그래프에 다운타임 반영`);
+            }, 2000);
+          }
+        });
+      }
+    }
+
+    function start(key) {
+      renderGauges(key);
+      renderLog(key);
+      setInterval(() => {
+        const sim = SIM[key];
+        for (let i = 0; i < sim.speed; i++) doTick(key);
+      }, 1000);
+    }
+
+    // 초기 로그 1건
+    function seed() {
+      addLog('method-1', 'SYS', '시뮬레이터 시작 — 4개 Mock Agent 송신 중');
+      addLog('method-2', 'SYS', '시뮬레이터 시작 — 4개 컨테이너 idle 상태');
+    }
+
+    bindControls('method-1');
+    bindControls('method-2');
+    seed();
+    start('method-1');
+    start('method-2');
+  })();
+</script>
+</body>
+</html>
