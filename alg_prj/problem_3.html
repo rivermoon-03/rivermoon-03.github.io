@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>문제 3 · 탈출 문제 (Max Flow)</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <link rel="stylesheet" href="assets/base.css" />
+  <link rel="stylesheet" href="assets/notebook.css" />
+  <link rel="stylesheet" href="problems/problem_3/flow.css" />
+
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <script defer src="problems/problem_3/flow.js"></script>
+  <script defer src="problems/problem_3/flow-ui.js"></script>
+  <script defer src="assets/notebook.js"></script>
+</head>
+<body>
+  <nav class="stepper" aria-label="셀 진행도">
+    <div class="stepper-inner"></div>
+  </nav>
+
+  <main>
+    <header style="margin-bottom: 32px;">
+      <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:6px;">
+        <a href="index.html">← 문제 목록</a>
+      </div>
+      <h1>문제 3 · 탈출 문제 (Escape Problem)</h1>
+      <p class="muted" style="margin:0;">
+        격자 위에 출발점들이 있고, 경계가 안전 영역. 서로 겹치지 않게 모든 출발점을 경계로 보낼 수 있는가?
+        — 최대 유량(Maximum Flow) 문제로 변환해 푼다.
+      </p>
+    </header>
+
+    <details class="problem-statement" open>
+      <summary>📋 문제 3 원문 (보고서 제출 기준)</summary>
+
+      <p>CLRS 교과서에 소개된 <b>탈출 문제(Escape Problem)</b>를 최대 유량(Maximum Flow) 문제로 변환하여 해결하는 과정을 구현하시오.</p>
+
+      <h3>요구사항</h3>
+      <ol>
+        <li>
+          <b>문제 정의:</b> 좌측 하단이 $(1,1)$, 우측 상단이 $(N,N)$인 $N \times N$ 그리드 위에 특정 정점 $r$개는 탈출(해야 할) 정점으로 지정됩니다.
+          바운더리 $(x,1)$, $(x,N)$, $(1,y)$, $(N,y)$인 모든 점들은 탈출 상태로 인정되는 영역입니다.
+          겹치지 않고 $r$개의 탈출 정점들이 나올 수 있는 경로들을 구하거나 탈출 불가능 여부를 아는 것이 목표입니다.
+        </li>
+        <li>
+          <b>네트워크 변환:</b> 주어진 그리드를 최대 유량 네트워크로 변환하시오.
+          이때, 각 정점을 <b>입력 정점(In-node)</b>과 <b>출력 정점(Out-node)</b>으로 나누고, 용량을 설정해야 합니다.
+        </li>
+        <li><b>최대 유량 알고리즘:</b> 변환된 네트워크에서 <b>Edmonds-Karp</b> 또는 <b>Dinic</b> 알고리즘을 구현하여 최대 유량을 구하시오.</li>
+        <li><b>경로 표시:</b> 최대 유량을 구한 후, 실제로 탈출에 사용된 경로들을 그리드 위에 표시하여 출력하시오.</li>
+      </ol>
+
+      <h3>💡 힌트</h3>
+      <div class="hint">
+        <b>정점 분할:</b> 각 그리드 정점 $(x, y)$를 $\text{Node}_{in}(x, y)$와 $\text{Node}_{out}(x, y)$ 두 개의 정점으로 분할. $\text{Node}_{in} \to \text{Node}_{out}$ 간선 용량 = 1 (그 정점을 통과할 수 있는 최대 경로 수).
+      </div>
+      <div class="hint">
+        <b>간선 연결:</b> 인접한 그리드 정점 $(x, y)$와 $(x', y')$ 사이 경로는 $\text{Node}_{out}(x, y) \to \text{Node}_{in}(x', y')$.
+      </div>
+      <div class="hint">
+        <b>탈출 정점:</b> 모든 탈출 정점의 $\text{Node}_{out}$ 정점을 가상의 싱크 $T$에 연결.
+      </div>
+    </details>
+
+    <!-- ============ CELL 00 ============ -->
+    <section class="cell cell--concept" id="cell-00" data-short="유량 기초" data-num="00">
+      <div class="cell-label">CELL 00 · 워밍업</div>
+      <h2>먼저 — 방향 그래프·용량·최대 유량이 뭔가요?</h2>
+
+      <h3>방향 그래프와 용량</h3>
+      <p>
+        <b>방향 간선(directed edge)</b>은 화살표가 있는 간선 — "$u$에서 $v$로 흐를 수 있다, 거꾸로는 별개".
+        간선마다 <b>용량(capacity) $c(u, v)$</b>가 붙어 있으면, 그 간선으로 흐를 수 있는 최대량을 뜻한다.
+      </p>
+
+      <h3>유량(Flow)이란</h3>
+      <p>
+        <b>유량 $f(u, v)$</b>는 그 간선을 통해 실제로 흐른 양. 조건 두 가지:
+      </p>
+      <div class="callout">
+        <ul style="margin:0;">
+          <li><b>용량 제약</b>: $0 \le f(u, v) \le c(u, v)$ — 용량을 초과하지 못한다.</li>
+          <li><b>보존 법칙</b>: 소스 $s$와 싱크 $t$를 제외한 모든 정점에서 <b>들어오는 유량 = 나가는 유량</b>. 새지도, 모이지도 않는다.</li>
+        </ul>
+      </div>
+
+      <h3>최대 유량(Maximum Flow)</h3>
+      <p>
+        주어진 네트워크에서 <b>소스 $s$ → 싱크 $t$</b>로 흘릴 수 있는 유량의 최댓값을 구하는 문제.
+      </p>
+
+      <div class="callout callout--soft">
+        <b>비유.</b> 수도관 네트워크 — 펌프장(소스)에서 정수장(싱크)으로 물을 최대한 많이 흘리고 싶다.
+        파이프마다 굵기(용량)가 정해져 있고, 각 분기점에서 들어오는 물 = 나가는 물 (저장 안 됨).
+        파이프를 어떻게 조합해 흘리면 가장 많이 흐를까? — 그게 최대 유량.
+      </div>
+
+      <p class="muted" style="font-size:.93rem;">
+        탈출 문제는 정확히 이 틀에 들어맞는다 — 출발점들(소스)에서 경계 셀들(싱크)로
+        "사람"이라는 유량을 최대한 많이 흘리는 것.
+      </p>
+    </section>
+
+    <!-- ============ CELL 0 ============ -->
+    <section class="cell cell--concept" id="cell-0" data-short="시작" data-num="0">
+      <div class="cell-label">CELL 0 · 시작</div>
+      <h2>이 페이지에서 뭘 할 거예요</h2>
+      <p>
+        $N \times N$ 격자에 $r$개의 출발점이 있다. 모두 격자의 <b>경계 셀</b>로 빠져나가야 하는데,
+        한 번 거친 셀은 다른 경로가 사용할 수 없다 (<b>정점 겹침 금지</b>).
+        — 그래서 모든 $r$명이 동시에 탈출 가능한가? 가능하다면 경로는?
+      </p>
+
+      <div class="callout">
+        <strong>사전 지식 없어도 OK.</strong>
+        셀 00에서 방향 그래프·용량·유량을 깔았다. 여기부터는 문제 자체를 차근차근.
+      </div>
+
+      <h3>완성하면 이런 게 나옵니다</h3>
+      <ul>
+        <li>격자 클릭으로 출발점을 자유롭게 토글</li>
+        <li>최대 유량 알고리즘(Edmonds-Karp)으로 탈출 경로 자동 계산</li>
+        <li>경로를 격자 위에 색깔별로 표시 — 누가 어디로 빠져나갔는가</li>
+        <li>증가 경로(augmenting path)를 단계별로 시청 — 알고리즘 내부 들여다보기</li>
+      </ul>
+
+      <div class="callout callout--soft">
+        <b>조작법:</b>
+        키보드 → 다음 스텝, ← 이전, <code>R</code> 초기화, <code>E</code> 끝까지.
+        그리드 셀 클릭으로 출발점 추가/제거.
+      </div>
+    </section>
+
+    <!-- ============ CELL 1 ============ -->
+    <section class="cell cell--concept" id="cell-1" data-short="문제 정의" data-num="1">
+      <div class="cell-label">CELL 1 · 개념</div>
+      <h2>탈출 문제 정의</h2>
+
+      <div class="callout">
+        <ul style="margin:0;">
+          <li>$N \times N$ 격자. 각 셀은 4방향(상하좌우) 이웃과 연결.</li>
+          <li>$r$개의 셀이 <b>출발점(source)</b>으로 지정됨.</li>
+          <li>격자의 <b>가장자리 셀(boundary)</b> 어디든 도착하면 탈출 성공.</li>
+          <li><b>제약</b>: 두 경로가 같은 셀을 거치면 안 됨 (정점 겹침 금지).</li>
+        </ul>
+      </div>
+
+      <p>
+        직관적 예시 — 4×4 격자, 중앙 4개 셀이 출발점:
+      </p>
+
+      <div class="mini-bst">
+        <svg viewBox="0 0 360 360" width="360" height="360" aria-hidden="true">
+          <!-- 4x4 grid with starts at center 2x2 -->
+          <g font-family="JetBrains Mono" font-size="11">
+            <!-- row 0 (top, boundary) -->
+            <rect x="40"  y="40"  width="70" height="70" fill="#fef3c7" stroke="#e5e7eb"/>
+            <rect x="110" y="40"  width="70" height="70" fill="#fef3c7" stroke="#e5e7eb"/>
+            <rect x="180" y="40"  width="70" height="70" fill="#fef3c7" stroke="#e5e7eb"/>
+            <rect x="250" y="40"  width="70" height="70" fill="#fef3c7" stroke="#e5e7eb"/>
+            <!-- row 1 -->
+            <rect x="40"  y="110" width="70" height="70" fill="#fef3c7" stroke="#e5e7eb"/>
+            <rect x="110" y="110" width="70" height="70" fill="#fee2e2" stroke="#ef4444" stroke-width="2.5"/>
+            <rect x="180" y="110" width="70" height="70" fill="#fee2e2" stroke="#ef4444" stroke-width="2.5"/>
+            <rect x="250" y="110" width="70" height="70" fill="#fef3c7" stroke="#e5e7eb"/>
+            <!-- row 2 -->
+            <rect x="40"  y="180" width="70" height="70" fill="#fef3c7" stroke="#e5e7eb"/>
+            <rect x="110" y="180" width="70" height="70" fill="#fee2e2" stroke="#ef4444" stroke-width="2.5"/>
+            <rect x="180" y="180" width="70" height="70" fill="#fee2e2" stroke="#ef4444" stroke-width="2.5"/>
+            <rect x="250" y="180" width="70" height="70" fill="#fef3c7" stroke="#e5e7eb"/>
+            <!-- row 3 (bottom, boundary) -->
+            <rect x="40"  y="250" width="70" height="70" fill="#fef3c7" stroke="#e5e7eb"/>
+            <rect x="110" y="250" width="70" height="70" fill="#fef3c7" stroke="#e5e7eb"/>
+            <rect x="180" y="250" width="70" height="70" fill="#fef3c7" stroke="#e5e7eb"/>
+            <rect x="250" y="250" width="70" height="70" fill="#fef3c7" stroke="#e5e7eb"/>
+
+            <!-- start dots -->
+            <circle cx="145" cy="145" r="9" fill="#dc2626" stroke="white" stroke-width="2"/>
+            <circle cx="215" cy="145" r="9" fill="#dc2626" stroke="white" stroke-width="2"/>
+            <circle cx="145" cy="215" r="9" fill="#dc2626" stroke="white" stroke-width="2"/>
+            <circle cx="215" cy="215" r="9" fill="#dc2626" stroke="white" stroke-width="2"/>
+
+            <!-- legend annotations -->
+            <text x="40"  y="32" fill="#92400e" font-weight="700">노랑 = 경계 (탈출 가능)</text>
+            <text x="200" y="32" fill="#b91c1c" font-weight="700">빨강 = 출발점</text>
+          </g>
+        </svg>
+      </div>
+
+      <p>
+        위 예시는 4명 모두 탈출 가능 — 각자 위·아래·왼·오 중 하나로 갈라지면 됨.
+        하지만 출발점이 더 빽빽하면 막힐 수 있다 — 자세한 건 셀 6에서 직접 실험.
+      </p>
+    </section>
+
+    <!-- ============ CELL 2 ============ -->
+    <section class="cell cell--derivation" id="cell-2" data-short="왜 유량?" data-num="2">
+      <div class="cell-label">CELL 2 · 유도</div>
+      <h2>왜 최대 유량 문제로 푸나?</h2>
+
+      <h3>무식한 방법</h3>
+      <p>
+        각 출발점에서 BFS로 경계까지 경로 찾기 → 경로의 셀들 "사용됨" 마킹 → 다음 출발점 시도. 반복.
+        문제: <b>순서에 따라 결과가 달라진다.</b> 첫 출발점이 좋은 셀들을 다 잡아먹어 다음 출발점이 막힐 수도.
+      </p>
+      <p>
+        백트래킹? — 가능하지만 최악의 경우 지수 시간. 실용적이지 않다.
+      </p>
+
+      <h3>최대 유량으로 변환</h3>
+      <div class="callout">
+        모든 출발점을 가상의 소스 $S$에 연결, 모든 경계 셀을 가상의 싱크 $T$에 연결.
+        각 셀이 한 경로만 통과시키도록 용량을 1로 제한.
+        그러면 <b>"최대 몇 개의 정점 겹치지 않는 $S \to T$ 경로가 있는가"</b>가 곧 <b>최대 유량 값</b>.
+      </div>
+
+      <p>이렇게 변환하면 $O((V+E)|f|)$ 같은 다항 시간 알고리즘으로 깔끔하게 풀린다 — 자세한 변환은 다음 셀.</p>
+    </section>
+
+    <!-- ============ CELL 3 ============ -->
+    <section class="cell cell--derivation" id="cell-3" data-short="변환" data-num="3">
+      <div class="cell-label">CELL 3 · 유도</div>
+      <h2>격자 → 유량 네트워크 변환</h2>
+
+      <h3>① 정점 분할 (Node Splitting)</h3>
+      <p>
+        각 격자 셀 $v$를 두 개의 노드로 쪼갠다 — $v_{\text{in}}$, $v_{\text{out}}$.
+        그 사이에 용량 1의 간선 — 이게 <b>"한 셀은 한 번만 지나갈 수 있다"</b>를 강제한다.
+      </p>
+
+      <div class="callout callout--soft">
+        <b>왜 분할?</b> 일반적인 유량은 <i>간선</i>에 용량을 두지만, 우리는 <i>정점</i>에 용량을 두고 싶다.
+        정점을 두 개로 쪼개 사이를 간선으로 잇고, 그 간선에 용량을 거는 것이 표준 트릭.
+      </div>
+
+      <div class="mini-bst">
+        <svg viewBox="0 0 540 200" width="540" height="200" aria-hidden="true">
+          <!-- before -->
+          <text x="130" y="20" text-anchor="middle" font-family="Pretendard" font-size="13" font-weight="700" fill="#6b7280">원래</text>
+          <g><circle cx="130" cy="100" r="28" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="130" y="106" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#1d4ed8">v</text></g>
+          <text x="130" y="160" text-anchor="middle" font-family="Pretendard" font-size="11" fill="#6b7280">셀 v 1개 노드, 용량은 정점에</text>
+
+          <!-- arrow -->
+          <text x="270" y="100" text-anchor="middle" font-family="Pretendard" font-size="20" fill="#94a3b8">→</text>
+
+          <!-- after -->
+          <text x="430" y="20" text-anchor="middle" font-family="Pretendard" font-size="13" font-weight="700" fill="#6b7280">분할 후</text>
+          <line x1="380" y1="100" x2="470" y2="100" stroke="#3b82f6" stroke-width="2.5"/>
+          <polygon points="470,100 460,95 460,105" fill="#3b82f6"/>
+          <text x="425" y="92" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#1d4ed8">cap = 1</text>
+          <g><circle cx="370" cy="100" r="22" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="370" y="105" text-anchor="middle" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#1d4ed8">v_in</text></g>
+          <g><circle cx="480" cy="100" r="22" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="480" y="105" text-anchor="middle" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#1d4ed8">v_out</text></g>
+          <text x="425" y="160" text-anchor="middle" font-family="Pretendard" font-size="11" fill="#6b7280">두 노드 사이 간선에 용량 1</text>
+        </svg>
+      </div>
+
+      <h3>② 인접 간선 연결</h3>
+      <p>
+        인접한 두 셀 $u, v$ — $u_{\text{out}} \to v_{\text{in}}$ 와 $v_{\text{out}} \to u_{\text{in}}$ 두 방향.
+        (무방향 격자라 양방향 통행 가능). 각 용량 1.
+      </p>
+
+      <h3>③ 가상 소스 $S$ 와 싱크 $T$</h3>
+      <ul>
+        <li><b>$S \to v_{\text{in}}$</b>: 각 출발점 $v$에 대해. 용량 1. — "출발점 하나당 한 사람".</li>
+        <li><b>$v_{\text{out}} \to T$</b>: 각 경계 셀 $v$에 대해. 용량 1. — "경계 셀 하나당 한 사람".</li>
+      </ul>
+
+      <p>이제 네트워크가 완성됐다. 정점 수는 $2N^2 + 2$, 간선 수는 $O(N^2)$.</p>
+    </section>
+
+    <!-- ============ CELL 4 ============ -->
+    <section class="cell cell--derivation" id="cell-4" data-short="알고리즘" data-num="4">
+      <div class="cell-label">CELL 4 · 유도</div>
+      <h2>Ford-Fulkerson + Edmonds-Karp</h2>
+
+      <div class="callout">
+        <b>Ford-Fulkerson 핵심 아이디어.</b>
+        <ol style="margin:6px 0 0;">
+          <li>현재 그래프에서 $S \to T$ <b>증가 경로(augmenting path)</b>를 하나 찾는다 (잔여 용량 &gt; 0인 간선만).</li>
+          <li>그 경로의 <b>최소 잔여 용량(bottleneck)</b>만큼 유량을 흘린다.</li>
+          <li>잔여 그래프를 갱신.</li>
+          <li>더 이상 증가 경로가 없을 때까지 반복.</li>
+        </ol>
+      </div>
+
+      <h3>잔여 그래프(Residual Graph)와 역방향 간선</h3>
+      <p>
+        간선 $(u, v)$에 용량 $c$ 중 $f$만큼 흘렸다고 하자.
+        잔여 그래프에는 두 종류 간선이 생긴다:
+      </p>
+      <ul>
+        <li><b>전방향 잔여</b> $u \to v$, 용량 $c - f$ — 아직 추가로 흘릴 수 있는 양</li>
+        <li><b>역방향 잔여</b> $v \to u$, 용량 $f$ — <b>이미 흘린 유량을 "되돌릴" 수 있는 양</b></li>
+      </ul>
+
+      <div class="callout callout--soft">
+        <b>왜 역방향 간선이 필요한가?</b>
+        이른 단계에 잘못된 경로를 골랐다면, 나중에 그 부분을 "취소"하고 더 좋은 조합으로 바꿔야 할 수 있다.
+        역방향 잔여 간선이 그 "취소" 통로 역할. — 이게 있어야 진짜 최대 유량까지 찾아낸다.
+      </div>
+
+      <h3>Edmonds-Karp = BFS로 증가 경로</h3>
+      <p>
+        Ford-Fulkerson은 증가 경로를 어떻게 찾을지 명시 안 함 — DFS도, BFS도, 다른 휴리스틱도 가능.
+        <b>Edmonds-Karp</b>는 <b>BFS로 최단(간선 수 기준) 증가 경로</b>를 매번 고른다.
+        이렇게 하면 시간 복잡도가 $O(V \cdot E^2)$로 깔끔하게 보장된다.
+      </p>
+
+      <details class="code-toggle">
+        <summary>Edmonds-Karp 의사코드</summary>
+        <pre>function maxFlow(net, S, T):
+    flow = 0
+    while true:
+        # BFS in residual graph
+        parent = BFS_find_path(net, S, T)
+        if parent is None: break
+        # bottleneck
+        b = min residual along the path
+        # push b along the path (also update reverse edges)
+        update flows
+        flow += b
+    return flow</pre>
+      </details>
+    </section>
+
+    <!-- ============ CELL 5 ============ -->
+    <section class="cell cell--run" id="cell-5" data-short="실행" data-num="5">
+      <div class="cell-label">CELL 5 · 실행</div>
+      <h2>인터랙티브 — 격자 입력 + 자동 계산</h2>
+
+      <p>
+        격자 셀을 클릭하면 출발점(빨강)을 토글한다. 프리셋 버튼으로 알려진 시나리오를 불러올 수도.
+        설정 후 <b>탈출 경로 계산</b>을 누르면 즉시 결과 표시 — 색깔별로 누가 어디로 빠져나갔는지.
+      </p>
+
+      <div class="flow-controls">
+        <label>격자 크기:</label>
+        <div class="size-radio" id="size-radio">
+          <button data-n="4">4×4</button>
+          <button data-n="5" class="is-active">5×5</button>
+          <button data-n="6">6×6</button>
+        </div>
+        <button class="btn" id="preset-easy">프리셋 1 (모두 탈출)</button>
+        <button class="btn" id="preset-tight">프리셋 2 (꽉 찬)</button>
+        <button class="btn" id="preset-stuck">프리셋 3 (1개 막힘)</button>
+        <button class="btn" id="clear-starts">출발점 비우기</button>
+        <button class="btn btn--primary" id="run-solver">탈출 경로 계산</button>
+      </div>
+
+      <div class="flow-grid-wrap">
+        <svg id="flow-grid" class="flow-grid" viewBox="0 0 460 460" width="460" height="460"></svg>
+      </div>
+
+      <div class="flow-legend">
+        <span class="item"><span class="swatch boundary"></span>경계 (탈출 가능 영역)</span>
+        <span class="item"><span class="swatch start"></span>출발점</span>
+      </div>
+
+      <div class="flow-result" id="flow-result" style="display:none;">
+        <div class="big-number" id="flow-bignum">—</div>
+        <div class="verdict" id="flow-verdict">—</div>
+      </div>
+
+      <div class="path-list" id="path-list"></div>
+    </section>
+
+    <!-- ============ CELL 6 ============ -->
+    <section class="cell cell--run" id="cell-6" data-short="단계별" data-num="6">
+      <div class="cell-label">CELL 6 · 실행</div>
+      <h2>단계별 — 증가 경로 한 줄씩</h2>
+
+      <p>
+        셀 5에서 계산한 시나리오의 알고리즘 진행을 그대로 본다.
+        Edmonds-Karp는 BFS로 증가 경로를 한 번에 하나 찾고, 1단위(=한 사람)를 흘려 보낸 뒤 잔여 그래프를 갱신.
+        이 사이클이 더 이상 경로가 없을 때까지 반복.
+      </p>
+
+      <div class="flow-grid-wrap">
+        <svg id="flow-grid-step" class="flow-grid" viewBox="0 0 460 460" width="460" height="460"></svg>
+      </div>
+
+      <div class="flow-legend">
+        <span class="item"><span class="swatch aug"></span>현재 증가 경로 (점선 황색)</span>
+      </div>
+
+      <div class="dfs-controls">
+        <button class="btn" id="aug-reset" title="처음으로 (R)">⟲ Reset</button>
+        <button class="btn" id="aug-prev" title="이전 (←)">← Prev</button>
+        <button class="btn btn--primary" id="aug-next" title="다음 (→)">Next →</button>
+        <button class="btn" id="aug-skip" title="끝까지 (E)">⇥ Skip</button>
+        <span class="progress-text" id="aug-progress">0 / 0</span>
+      </div>
+
+      <div class="aug-narration" id="aug-narration">
+        <span class="narration-empty">셀 5에서 계산하면 여기서 단계별로 재생됩니다.</span>
+      </div>
+    </section>
+
+    <!-- ============ CELL 7 ============ -->
+    <section class="cell" id="cell-7" data-short="정리" data-num="7">
+      <div class="cell-label">CELL 7 · 마무리</div>
+      <h2>정리</h2>
+
+      <h3>전체 알고리즘 한 줄로</h3>
+      <ol>
+        <li>각 격자 셀을 in-out 두 노드로 분할, in→out 간선 용량 1.</li>
+        <li>인접 셀끼리 out → in 간선 (양방향).</li>
+        <li>가상 소스 $S$ → 출발점 in 노드 (cap 1), 경계 셀 out 노드 → 가상 싱크 $T$ (cap 1).</li>
+        <li>$S$에서 $T$로 Edmonds-Karp (BFS로 증가 경로 반복).</li>
+        <li>최대 유량 값 = 탈출 성공한 사람 수. 보낸 유량을 추적하면 각 출발점이 거친 경로 복원.</li>
+      </ol>
+
+      <h3>시간 복잡도</h3>
+      <p>
+        Edmonds-Karp: $O(V \cdot E^2)$. 우리 네트워크에선 $V = O(N^2)$, $E = O(N^2)$ → $O(N^6)$.
+        $N=10$이면 약 $10^6$로 충분히 빠르다.
+      </p>
+      <p>
+        <b>Dinic 알고리즘</b>: 같은 문제를 $O(V^2 \cdot E)$ 또는 $O(E \sqrt{V})$ (단위 용량 네트워크)로 개선.
+        큰 격자엔 Dinic을 쓰는 게 일반적.
+      </p>
+
+      <h3>이게 실제로 어디 쓰여요?</h3>
+      <ul>
+        <li><b>대피 시뮬레이션</b> — 건물 내 사람들이 출구로 동시에 이동할 때 병목 분석.</li>
+        <li><b>VLSI 라우팅</b> — 회로 위에서 정점·간선 겹침 없이 여러 신호선을 연결.</li>
+        <li><b>이미지 분할</b> — 그래프 컷 (min cut과 max flow의 쌍대성 이용).</li>
+        <li><b>이분 매칭</b> — 문제 5에서 본격적으로 다룬다.</li>
+      </ul>
+    </section>
+  </main>
+
+</body>
+</html>

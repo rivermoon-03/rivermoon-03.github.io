@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>문제 5 · 최소 비용 작업 배정 (MCMF)</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <link rel="stylesheet" href="assets/base.css" />
+  <link rel="stylesheet" href="assets/notebook.css" />
+  <link rel="stylesheet" href="problems/problem_5/mcmf.css" />
+
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  <script defer src="problems/problem_5/mcmf.js"></script>
+  <script defer src="problems/problem_5/mcmf-ui.js"></script>
+  <script defer src="assets/notebook.js"></script>
+</head>
+<body>
+  <nav class="stepper" aria-label="셀 진행도">
+    <div class="stepper-inner"></div>
+  </nav>
+
+  <main>
+    <header style="margin-bottom: 32px;">
+      <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:6px;">
+        <a href="index.html">← 문제 목록</a>
+      </div>
+      <h1>문제 5 · 최소 비용 작업 배정</h1>
+      <p class="muted" style="margin:0;">
+        $N$명의 작업자와 $N$개의 작업, 그리고 비용 행렬. 1대1로 배정하되 <b>총 비용을 최소화</b>하는
+        조합을 찾는다 — 최소 비용 최대 유량(MCMF)으로 변환해 푼다.
+      </p>
+    </header>
+
+    <details class="problem-statement" open>
+      <summary>📋 문제 5 원문 (보고서 제출 기준)</summary>
+
+      <p>$N$명의 작업자와 $N$개의 작업이 있고, 비용 행렬 $C_{ij}$가 주어졌을 때, 총 비용의 합이 최소가 되도록 하는 작업 배정 문제를 해결하시오.</p>
+
+      <h3>요구사항</h3>
+      <ol>
+        <li>
+          <b>그래프 모델:</b> 이 문제를 <b>최소 비용 최대 유량(MCMF)</b> 문제로 변환하는 방법을 자세히 설명하고,
+          소스 $S$, 싱크 $T$, 용량 $U$, 비용 $C$를 포함한 그래프 모델을 제시하시오.
+        </li>
+        <li>
+          <b>알고리즘 구현:</b> 변환된 그래프 모델을 기반으로, 최소 비용 최대 유량(MCMF) 알고리즘을 구현하시오.
+          구현 시, <b>Bellman-Ford 알고리즘</b> 또는 <b>SPFA(Shortest Path Faster Algorithm)</b>를 사용하여
+          잔여 그래프(Residual Graph)에서 최소 비용 경로를 찾는 과정을 반복해야 합니다.
+        </li>
+        <li>
+          <b>최적 배정 및 비용:</b> 최종적으로 배정된 작업자-작업 쌍의 목록과 최소 총 비용을 출력하시오.
+        </li>
+      </ol>
+
+      <h3>💡 힌트</h3>
+      <div class="hint"><b>MCMF.</b> 매번 <b>최소 비용 경로(Shortest Path)</b>를 찾아 해당 경로에 유량 1을 흘려보내는 과정을 반복.</div>
+      <div class="hint"><b>음수 비용.</b> 잔여 그래프에 음수 비용 간선이 생길 수 있으므로 Bellman-Ford/SPFA 사용. <i>Dijkstra는 음수 비용에서 안 됨.</i></div>
+      <div class="hint"><b>반복 횟수.</b> 총 $N$번의 유량(매칭)을 찾으면 됨.</div>
+    </details>
+
+    <!-- ============ CELL 00 ============ -->
+    <section class="cell cell--concept" id="cell-00" data-short="최단경로" data-num="00">
+      <div class="cell-label">CELL 00 · 워밍업</div>
+      <h2>먼저 — 최단 경로와 SPFA가 뭔가요?</h2>
+
+      <p>
+        가중치가 있는 방향 그래프에서 <b>최단 경로</b>를 찾는 알고리즘은 여러 가지 — 어떤 걸 써야 하는지는 <b>음수 가중치</b> 유무에 달려있다.
+      </p>
+
+      <div class="callout">
+        <table style="width:100%;border-collapse:collapse;font-size:.9rem;margin:6px 0;">
+          <thead>
+            <tr style="background:rgba(255,255,255,0.6);">
+              <th style="padding:6px 8px;text-align:left;">알고리즘</th>
+              <th style="padding:6px 8px;text-align:left;">음수 가중치</th>
+              <th style="padding:6px 8px;text-align:left;">시간 복잡도</th>
+              <th style="padding:6px 8px;text-align:left;">전형적 용도</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:6px 8px;">Dijkstra</td><td style="padding:6px 8px;">❌</td><td style="padding:6px 8px;">$O((V+E) \log V)$</td><td style="padding:6px 8px;">양수 가중치 일반 최단</td></tr>
+            <tr><td style="padding:6px 8px;">Bellman-Ford</td><td style="padding:6px 8px;">✅</td><td style="padding:6px 8px;">$O(V \cdot E)$</td><td style="padding:6px 8px;">음수 OK, 음수 사이클 검출</td></tr>
+            <tr><td style="padding:6px 8px;"><b>SPFA</b></td><td style="padding:6px 8px;">✅</td><td style="padding:6px 8px;">평균 $O(E)$ (최악 $O(VE)$)</td><td style="padding:6px 8px;">실용에서 Bellman-Ford보다 빠름</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>왜 Dijkstra는 음수에서 안 되나?</h3>
+      <p>
+        Dijkstra는 "현재까지 거리가 가장 짧은 정점을 확정"하는 전략. 한 번 확정하면 다시 안 본다.
+        음수 간선이 있으면 — 더 늦게 발견한 우회로가 음수를 거쳐 더 짧을 수 있다. 확정한 거리가 틀려진다.
+      </p>
+
+      <h3>SPFA = Bellman-Ford의 큐 버전</h3>
+      <p>
+        Bellman-Ford는 모든 간선을 $V-1$번 본다. SPFA는 "거리가 바뀐 정점만 큐에 넣고 다시 확인" — 변화 없는 정점은 안 봄.
+        평균적으로 훨씬 빠르다. 우리는 SPFA를 쓴다.
+      </p>
+
+      <details class="code-toggle">
+        <summary>SPFA 의사코드</summary>
+        <pre>function spfa(graph, s):
+    dist = [∞ for all v]
+    dist[s] = 0
+    queue = [s]
+    inQueue[s] = true
+    while queue not empty:
+        u = queue.pop()
+        inQueue[u] = false
+        for each edge (u, v, cost):
+            if dist[u] + cost < dist[v]:
+                dist[v] = dist[u] + cost
+                parent[v] = u
+                if not inQueue[v]:
+                    queue.push(v)
+                    inQueue[v] = true
+    return dist, parent</pre>
+      </details>
+
+      <p class="muted" style="font-size:.93rem;">
+        MCMF가 SPFA를 쓰는 이유는 <b>잔여 그래프의 역방향 간선이 음수 비용</b>을 갖기 때문 — 다음 셀들에서 자세히.
+      </p>
+    </section>
+
+    <!-- ============ CELL 0 ============ -->
+    <section class="cell cell--concept" id="cell-0" data-short="시작" data-num="0">
+      <div class="cell-label">CELL 0 · 시작</div>
+      <h2>이 페이지에서 뭘 할 거예요</h2>
+      <p>
+        $N$명의 작업자가 있고 $N$개의 작업이 있다. 각 작업자가 각 작업을 할 때의 비용 $C_{ij}$가 행렬로 주어진다.
+        <b>1대1로 모두 짝지어</b>야 하고, 총 비용의 합을 <b>최소화</b>해야 한다.
+      </p>
+
+      <div class="callout">
+        <strong>사전 지식 없어도 OK.</strong>
+        문제 3에서 본 최대 유량 위에 "비용"을 얹은 확장이다. 셀 00에서 SPFA를 짚었고,
+        여기서부터 문제 정의·매칭·MCMF 변환 순으로 간다.
+      </div>
+
+      <h3>완성하면 이런 게 나옵니다</h3>
+      <ul>
+        <li>비용 행렬 직접 편집 + 프리셋 (스왑이 일어나는 케이스 포함)</li>
+        <li>SPFA로 MCMF를 매 반복마다 최단 경로 찾아 1단위 흘려보내는 과정</li>
+        <li>역방향 잔여 간선이 어떻게 "이전 배정을 되돌리는지" 단계별 시각화</li>
+        <li>최종 배정 결과와 최소 총 비용 표시</li>
+      </ul>
+    </section>
+
+    <!-- ============ CELL 1 ============ -->
+    <section class="cell cell--concept" id="cell-1" data-short="이분매칭" data-num="1">
+      <div class="cell-label">CELL 1 · 개념</div>
+      <h2>이분 그래프와 매칭</h2>
+
+      <p>
+        <b>이분 그래프(bipartite graph)</b> — 정점을 두 집합으로 나누고, 같은 집합 안에서는 간선 없음.
+        간선은 항상 서로 다른 집합 사이.
+      </p>
+
+      <div class="callout">
+        예: <b>작업자 집합</b>(왼쪽) ↔ <b>작업 집합</b>(오른쪽). 어떤 작업자가 어떤 작업을 할 수 있는지가 간선.
+      </div>
+
+      <p>
+        <b>매칭(matching)</b> — 어떤 간선도 같은 정점을 공유하지 않는 간선들의 모임.
+        <b>완전 매칭(perfect matching)</b> — 모든 정점이 정확히 하나의 간선에 속함.
+        $N$ 명 / $N$ 작업이면 매칭 크기 $N$ = 완전 매칭.
+      </p>
+
+      <div class="mini-bst">
+        <svg viewBox="0 0 500 220" width="500" height="220" aria-hidden="true">
+          <!-- workers W1..W3 -->
+          <g><circle cx="120" cy="40"  r="20" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="120" y="46" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#1d4ed8">W₁</text></g>
+          <g><circle cx="120" cy="110" r="20" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="120" y="116" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#1d4ed8">W₂</text></g>
+          <g><circle cx="120" cy="180" r="20" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="120" y="186" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#1d4ed8">W₃</text></g>
+          <!-- tasks T1..T3 -->
+          <g><circle cx="380" cy="40"  r="20" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="380" y="46" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#b45309">T₁</text></g>
+          <g><circle cx="380" cy="110" r="20" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="380" y="116" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#b45309">T₂</text></g>
+          <g><circle cx="380" cy="180" r="20" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="380" y="186" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#b45309">T₃</text></g>
+          <!-- All possible edges (faint) -->
+          <line x1="140" y1="40"  x2="360" y2="40"  stroke="#e5e7eb" stroke-width="1"/>
+          <line x1="140" y1="40"  x2="360" y2="110" stroke="#e5e7eb" stroke-width="1"/>
+          <line x1="140" y1="40"  x2="360" y2="180" stroke="#e5e7eb" stroke-width="1"/>
+          <line x1="140" y1="110" x2="360" y2="40"  stroke="#e5e7eb" stroke-width="1"/>
+          <line x1="140" y1="110" x2="360" y2="110" stroke="#e5e7eb" stroke-width="1"/>
+          <line x1="140" y1="110" x2="360" y2="180" stroke="#e5e7eb" stroke-width="1"/>
+          <line x1="140" y1="180" x2="360" y2="40"  stroke="#e5e7eb" stroke-width="1"/>
+          <line x1="140" y1="180" x2="360" y2="110" stroke="#e5e7eb" stroke-width="1"/>
+          <line x1="140" y1="180" x2="360" y2="180" stroke="#e5e7eb" stroke-width="1"/>
+          <!-- a matching highlighted in blue -->
+          <line x1="140" y1="40"  x2="360" y2="110" stroke="#3b82f6" stroke-width="3.5"/>
+          <line x1="140" y1="110" x2="360" y2="180" stroke="#3b82f6" stroke-width="3.5"/>
+          <line x1="140" y1="180" x2="360" y2="40"  stroke="#3b82f6" stroke-width="3.5"/>
+
+          <text x="120" y="210" text-anchor="middle" font-family="Pretendard" font-size="11" fill="#6b7280">작업자</text>
+          <text x="380" y="210" text-anchor="middle" font-family="Pretendard" font-size="11" fill="#6b7280">작업</text>
+        </svg>
+      </div>
+
+      <p>위 예시: $W_1 \to T_2$, $W_2 \to T_3$, $W_3 \to T_1$ 매칭. 모든 정점이 정확히 하나에 속함. 가능한 매칭은 $N! = 6$가지.</p>
+    </section>
+
+    <!-- ============ CELL 2 ============ -->
+    <section class="cell cell--concept" id="cell-2" data-short="비용" data-num="2">
+      <div class="cell-label">CELL 2 · 개념</div>
+      <h2>비용 행렬</h2>
+
+      <p>
+        모든 (작업자 $i$, 작업 $j$) 쌍에 대해 비용 $C_{ij}$가 주어진다. 행렬로 정리하면:
+      </p>
+
+      <div class="cost-matrix-wrap">
+        <table class="cost-matrix">
+          <thead>
+            <tr><th></th><th>T₁</th><th>T₂</th><th>T₃</th></tr>
+          </thead>
+          <tbody>
+            <tr><th class="row-head">W₁</th><td class="cell">5</td><td class="cell assigned">1</td><td class="cell">9</td></tr>
+            <tr><th class="row-head">W₂</th><td class="cell">9</td><td class="cell">2</td><td class="cell">9</td></tr>
+            <tr><th class="row-head">W₃</th><td class="cell">9</td><td class="cell">9</td><td class="cell assigned">1</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        파란 강조 칸은 한 가지 가능한 배정 — $W_1 \to T_2 (1)$, $W_3 \to T_3 (1)$.
+        $W_2$도 어딘가 배정해야 하니 남은 칸 중에서 골라야 한다.
+        모든 가능한 매칭 중 합이 최소인 걸 찾는 게 목표.
+      </p>
+    </section>
+
+    <!-- ============ CELL 3 ============ -->
+    <section class="cell cell--derivation" id="cell-3" data-short="N!" data-num="3">
+      <div class="cell-label">CELL 3 · 유도</div>
+      <h2>무식한 방법 — 모든 순열</h2>
+
+      <p>
+        $N$개의 작업을 $N$명의 작업자에게 1대1 배정하는 방법은 <b>$N!$ 가지</b>.
+        모든 경우를 시도해 비용을 계산하고 최소를 찾으면 된다.
+      </p>
+
+      <p>$N=3$ 이면 $6$가지 — OK. $N=10$이면 $3.6 \times 10^6$ — 아직 가능. $N=20$이면 $2.4 \times 10^{18}$ — 우주의 나이로도 안 끝난다.</p>
+
+      <div class="callout">
+        다항 시간 알고리즘이 필요하다. <b>MCMF로 변환</b>하면 $O(N^3)$ ~ $O(N^4)$ 수준.
+        $N = 100$도 1초 내에 풀린다.
+      </div>
+    </section>
+
+    <!-- ============ CELL 4 ============ -->
+    <section class="cell cell--derivation" id="cell-4" data-short="네트워크" data-num="4">
+      <div class="cell-label">CELL 4 · 유도</div>
+      <h2>MCMF 네트워크 모델</h2>
+
+      <p>다음과 같이 그래프를 만든다:</p>
+
+      <div class="callout">
+        <ul style="margin:0;">
+          <li><b>$S \to W_i$</b>: 각 작업자에 대해. <b>용량 1, 비용 0</b>. — "각 작업자는 정확히 한 작업".</li>
+          <li><b>$W_i \to T_j$</b>: 모든 (작업자, 작업) 쌍에 대해. <b>용량 1, 비용 $C_{ij}$</b>.</li>
+          <li><b>$T_j \to T$</b>: 각 작업에 대해. <b>용량 1, 비용 0</b>. — "각 작업은 한 작업자만 받음".</li>
+        </ul>
+      </div>
+
+      <p>
+        $S$에서 $T$로 흘릴 수 있는 최대 유량은 $N$ (모든 작업자/작업이 짝지어졌을 때).
+        매번 1단위씩 흘려보내며 — <b>최소 비용 경로로</b> 흘리면 누적 비용이 자동으로 최소가 된다.
+      </p>
+
+      <div class="mini-bst">
+        <svg viewBox="0 0 620 240" width="620" height="240" aria-hidden="true">
+          <!-- S -->
+          <g><circle cx="60" cy="120" r="22" fill="#dbeafe" stroke="#3b82f6" stroke-width="2.5"/><text x="60" y="126" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#1d4ed8">S</text></g>
+          <!-- Workers -->
+          <g><circle cx="220" cy="50"  r="20" fill="white" stroke="#94a3b8" stroke-width="2"/><text x="220" y="56" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#1f2937">W₁</text></g>
+          <g><circle cx="220" cy="120" r="20" fill="white" stroke="#94a3b8" stroke-width="2"/><text x="220" y="126" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#1f2937">W₂</text></g>
+          <g><circle cx="220" cy="190" r="20" fill="white" stroke="#94a3b8" stroke-width="2"/><text x="220" y="196" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#1f2937">W₃</text></g>
+          <!-- Tasks -->
+          <g><circle cx="400" cy="50"  r="20" fill="white" stroke="#94a3b8" stroke-width="2"/><text x="400" y="56" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#1f2937">T₁</text></g>
+          <g><circle cx="400" cy="120" r="20" fill="white" stroke="#94a3b8" stroke-width="2"/><text x="400" y="126" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#1f2937">T₂</text></g>
+          <g><circle cx="400" cy="190" r="20" fill="white" stroke="#94a3b8" stroke-width="2"/><text x="400" y="196" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#1f2937">T₃</text></g>
+          <!-- T -->
+          <g><circle cx="560" cy="120" r="22" fill="#dbeafe" stroke="#3b82f6" stroke-width="2.5"/><text x="560" y="126" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#1d4ed8">T</text></g>
+
+          <!-- S → W edges -->
+          <line x1="82" y1="120" x2="200" y2="50"  stroke="#3b82f6" stroke-width="2"/>
+          <line x1="82" y1="120" x2="200" y2="120" stroke="#3b82f6" stroke-width="2"/>
+          <line x1="82" y1="120" x2="200" y2="190" stroke="#3b82f6" stroke-width="2"/>
+          <text x="145" y="80" font-family="JetBrains Mono" font-size="10" fill="#1d4ed8">cap=1, cost=0</text>
+
+          <!-- Sample W-T edges (showing 3 of 9 for clarity) -->
+          <line x1="240" y1="50"  x2="380" y2="50"  stroke="#94a3b8" stroke-width="1.5"/>
+          <line x1="240" y1="50"  x2="380" y2="120" stroke="#94a3b8" stroke-width="1.5"/>
+          <line x1="240" y1="120" x2="380" y2="120" stroke="#94a3b8" stroke-width="1.5"/>
+          <line x1="240" y1="120" x2="380" y2="190" stroke="#94a3b8" stroke-width="1.5"/>
+          <line x1="240" y1="190" x2="380" y2="50"  stroke="#94a3b8" stroke-width="1.5"/>
+          <line x1="240" y1="190" x2="380" y2="190" stroke="#94a3b8" stroke-width="1.5"/>
+          <line x1="240" y1="50"  x2="380" y2="190" stroke="#94a3b8" stroke-width="1.5"/>
+          <line x1="240" y1="120" x2="380" y2="50"  stroke="#94a3b8" stroke-width="1.5"/>
+          <line x1="240" y1="190" x2="380" y2="120" stroke="#94a3b8" stroke-width="1.5"/>
+          <text x="310" y="13" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#475569">cap=1, cost=Cᵢⱼ (모든 쌍)</text>
+
+          <!-- T → sink -->
+          <line x1="420" y1="50"  x2="538" y2="120" stroke="#3b82f6" stroke-width="2"/>
+          <line x1="420" y1="120" x2="538" y2="120" stroke="#3b82f6" stroke-width="2"/>
+          <line x1="420" y1="190" x2="538" y2="120" stroke="#3b82f6" stroke-width="2"/>
+          <text x="475" y="80" font-family="JetBrains Mono" font-size="10" fill="#1d4ed8">cap=1, cost=0</text>
+        </svg>
+      </div>
+
+      <p class="muted" style="font-size:.93rem;">
+        흐름 1단위 = 작업자 한 명을 작업 하나에 배정.
+        총 흐름 $= N$이 되면 모든 배정 완료. 그 사이 누적 비용이 자동으로 최소화된다.
+      </p>
+    </section>
+
+    <!-- ============ CELL 5 ============ -->
+    <section class="cell cell--derivation" id="cell-5" data-short="역방향 음수" data-num="5">
+      <div class="cell-label">CELL 5 · 유도</div>
+      <h2>잔여 그래프와 역방향 간선의 비용</h2>
+
+      <p>
+        문제 3에서 본 잔여 그래프 원리는 여기서도 똑같다 — 다만 <b>비용</b>이 추가된다.
+      </p>
+
+      <div class="callout">
+        간선 $(u, v)$에 용량 1, 비용 $c$로 1단위 흘렸을 때 — 잔여 그래프에는:
+        <ul style="margin:6px 0 0;">
+          <li><b>전방향 잔여</b> $u \to v$: 용량 0 (이미 다 씀)</li>
+          <li><b>역방향 잔여</b> $v \to u$: 용량 1, <b>비용 $-c$</b> — 흘린 걸 되돌리면 비용도 환불</li>
+        </ul>
+      </div>
+
+      <h3>왜 음수 비용인가?</h3>
+      <p>
+        그 간선을 통해 비용 $c$를 "썼었다". 흐름을 되돌리면 그 비용을 회수하는 셈 — 그러니 음수.
+        이 음수 비용 덕분에 알고리즘이 "이전 배정을 취소하고 더 좋은 조합으로 바꾸는" 경로를 자연스럽게 발견한다.
+      </p>
+
+      <div class="callout callout--soft">
+        <b>스왑이 일어나는 시나리오.</b> 첫 반복에서 SPFA가 "$W_1 \to T_2$"를 골랐다고 하자 (비용 1).
+        나중 반복에서 $W_2$가 들어와야 하는데, $T_2$가 사실 $W_2$에게 더 잘 맞다면 —
+        SPFA가 경로 <code>S → W₂ → T₂(역방향) → W₁ → T₁ → T</code>를 찾는다.
+        이 경로의 비용은 "$T_2$ 배정 비용 − 이전의 1 + $T_1$ 배정 비용". 즉 <b>스왑</b>이 한 번에 일어난다.
+      </div>
+
+      <p>
+        이게 MCMF가 단순 greedy(첫 매칭만 보는 것)보다 강력한 이유. 매번 음수 비용 경로까지 고려해 진짜 최소를 찾는다.
+      </p>
+    </section>
+
+    <!-- ============ CELL 6 ============ -->
+    <section class="cell cell--run" id="cell-6" data-short="실행" data-num="6">
+      <div class="cell-label">CELL 6 · 실행</div>
+      <h2>인터랙티브 — 비용 행렬 + MCMF + 단계별 시청</h2>
+
+      <p>
+        프리셋을 골라 시작하거나, 비용 칸을 직접 클릭해 편집하자.
+        <b>실행</b> 버튼을 누르면 MCMF가 돌고, 그 다음 Next로 매 반복(=한 명 배정)이 어떻게 일어났는지 본다.
+      </p>
+
+      <div class="mcmf-controls">
+        <label>크기:</label>
+        <div class="size-radio" id="size-radio">
+          <button data-n="3" class="is-active">3×3</button>
+          <button data-n="4">4×4</button>
+        </div>
+        <button class="btn" id="preset-identity">프리셋: 대각선</button>
+        <button class="btn" id="preset-swap">프리셋: 스왑</button>
+        <button class="btn" id="preset-tricky">프리셋: 교차</button>
+        <button class="btn" id="preset-classic">프리셋: 4×4 고전</button>
+        <button class="btn btn--primary" id="run-mcmf">실행</button>
+      </div>
+
+      <div class="cost-matrix-wrap">
+        <table class="cost-matrix" id="cost-matrix"></table>
+      </div>
+
+      <div class="bipartite-wrap">
+        <svg class="bipartite-svg" id="bipartite-svg" viewBox="0 0 620 360"></svg>
+      </div>
+
+      <div class="mcmf-result" id="mcmf-result" style="display:none;">
+        <div class="label-cell">최소 총 비용</div>
+        <div class="big-number" id="total-cost">—</div>
+        <div class="label-cell">최적 배정</div>
+        <div class="assignment-list" id="assignment-list"></div>
+      </div>
+
+      <div class="dfs-controls">
+        <button class="btn" id="mcmf-reset" title="처음으로 (R)">⟲ Reset</button>
+        <button class="btn" id="mcmf-prev" title="이전 (←)">← Prev</button>
+        <button class="btn btn--primary" id="mcmf-next" title="다음 (→)">Next →</button>
+        <button class="btn" id="mcmf-skip" title="끝까지 (E)">⇥ Skip</button>
+        <span class="progress-text" id="mcmf-progress">0 / 0</span>
+      </div>
+
+      <div class="mcmf-narration" id="mcmf-narration">
+        <span class="narration-empty">실행 버튼을 누른 뒤 Next로 각 반복을 시청하세요.</span>
+      </div>
+    </section>
+
+    <!-- ============ CELL 7 ============ -->
+    <section class="cell" id="cell-7" data-short="정리" data-num="7">
+      <div class="cell-label">CELL 7 · 마무리</div>
+      <h2>정리</h2>
+
+      <h3>전체 알고리즘 한 줄로</h3>
+      <ol>
+        <li>네트워크 구성: $S \to W_i$ (cap 1, cost 0), $W_i \to T_j$ (cap 1, cost $C_{ij}$), $T_j \to T$ (cap 1, cost 0).</li>
+        <li>잔여 그래프에서 <b>SPFA</b>로 $S \to T$ 최소 비용 경로 탐색.</li>
+        <li>경로 따라 1단위 흘리며 잔여 갱신 (역방향 간선에 음수 비용 자동 생성).</li>
+        <li>$N$번 반복 (또는 경로가 더 없을 때까지). 누적 비용 = 최소 총 비용.</li>
+        <li>최종 배정: $W_i \to T_j$의 forward 간선 중 flow=1인 쌍이 답.</li>
+      </ol>
+
+      <h3>시간 복잡도</h3>
+      <p>
+        $O(\text{유량} \times \text{SPFA 1회})$ = $O(N \times V \cdot E)$.
+        우리 네트워크 $V = 2N+2$, $E = O(N^2)$ → 총 $O(N^4)$. $N=100$도 $10^8$ 정도로 충분.
+      </p>
+
+      <h3>다른 방법 — 헝가리안 알고리즘</h3>
+      <p>
+        같은 배정 문제를 $O(N^3)$로 푸는 전용 알고리즘. 듀얼 변수 + 매칭 갱신.
+        구현이 다소 복잡하지만 큰 $N$에서 더 빠르다.
+        본질은 MCMF와 같은 LP 쌍대성을 활용.
+      </p>
+
+      <h3>이게 실제로 어디 쓰여요?</h3>
+      <ul>
+        <li><b>인력 스케줄링</b> — 직원을 시프트에, 의사를 환자에, 강사를 강의에.</li>
+        <li><b>광고 입찰</b> — 광고주와 노출 슬롯을 가치 최대화로 매칭.</li>
+        <li><b>물류</b> — 트럭에 배달 경로 1대1 배정.</li>
+        <li><b>이미지 매칭</b> — 두 이미지의 특징점을 비용 기반으로 짝짓기.</li>
+      </ul>
+    </section>
+  </main>
+
+</body>
+</html>
