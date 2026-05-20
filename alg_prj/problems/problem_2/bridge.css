@@ -1,0 +1,272 @@
+/* === Graph viewer === */
+.bridge-graph-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin: 14px 0;
+}
+.bridge-graph {
+  display: block;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 620px;
+  height: auto;
+}
+
+.bridge-graph .edge {
+  stroke: #cbd5e1;
+  stroke-width: 2;
+  transition: stroke .15s, stroke-width .15s;
+}
+.bridge-graph .edge.back {
+  stroke: #94a3b8;
+  stroke-dasharray: 6 4;
+}
+.bridge-graph .edge.bridge {
+  stroke: #ef4444;
+  stroke-width: 4;
+}
+.bridge-graph .edge.current {
+  stroke: #f59e0b;
+  stroke-width: 4.5;
+}
+.bridge-graph .edge.current.bridge {
+  stroke: #b91c1c;
+  stroke-width: 5;
+}
+
+.bridge-graph .node circle {
+  fill: white;
+  stroke: #94a3b8;
+  stroke-width: 2;
+  transition: fill .15s, stroke .15s, stroke-width .15s;
+}
+.bridge-graph .node.visited circle {
+  fill: #dbeafe;
+  stroke: #3b82f6;
+}
+.bridge-graph .node.current circle {
+  fill: #fef3c7;
+  stroke: #f59e0b;
+  stroke-width: 4;
+}
+.bridge-graph .node text.label {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  text-anchor: middle;
+  fill: #1f2937;
+  pointer-events: none;
+}
+.bridge-graph .node.visited text.label { fill: #1d4ed8; }
+.bridge-graph .node.current text.label { fill: #92400e; }
+
+.bridge-graph .dl-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  fill: #b45309;
+  text-anchor: middle;
+  pointer-events: none;
+}
+.bridge-graph .dl-label .key { fill: #6b7280; font-weight: 400; }
+
+/* === Input panel === */
+.graph-input {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  margin: 14px 0;
+}
+.graph-input-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.graph-input textarea {
+  width: 100%;
+  min-height: 180px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .9rem;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  resize: vertical;
+}
+.graph-input textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.input-help {
+  font-size: .82rem;
+  color: var(--text-muted);
+  background: var(--code-bg);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+}
+.input-help code {
+  background: white;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.preset-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-self: flex-start;
+}
+
+.error-msg {
+  background: #fee2e2;
+  color: #991b1b;
+  border-left: 3px solid #dc2626;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: .9rem;
+  margin: 8px 0;
+}
+
+/* === DFS controls === */
+.dfs-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: var(--code-bg);
+  border-radius: var(--radius-sm);
+  margin: 12px 0;
+}
+.dfs-controls .progress-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .85rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.dfs-narration {
+  margin: 12px 0;
+  padding: 14px 18px;
+  background: #fffaf0;
+  border-left: 3px solid #f59e0b;
+  border-radius: var(--radius-sm);
+  min-height: 56px;
+  font-size: .95rem;
+  line-height: 1.55;
+}
+.dfs-narration .narration-empty { color: var(--text-faint); }
+.dfs-narration code { background: #fef3c7; }
+
+/* === Result + edge checker (cell 8) === */
+.result-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin: 14px 0;
+}
+.result-panel h3 {
+  font-size: .95rem;
+  margin: 0 0 10px;
+  color: var(--text-muted);
+}
+
+.bridge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+.bridge-tag {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .9rem;
+  font-weight: 600;
+}
+.bridge-tag.empty {
+  background: var(--code-bg);
+  border-color: var(--border);
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.edge-checker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: var(--code-bg);
+  border-radius: var(--radius-sm);
+}
+.edge-checker label {
+  font-size: .9rem;
+  color: var(--text-muted);
+}
+.edge-checker input[type="number"],
+.edge-checker select {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .9rem;
+  width: 80px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+}
+.edge-checker .check-result {
+  margin-left: 10px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .85rem;
+  font-weight: 600;
+}
+.edge-checker .check-result.yes {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+.edge-checker .check-result.no {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+.edge-checker .check-result.not-found {
+  background: var(--code-bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/* === Legend === */
+.bridge-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: .82rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+.bridge-legend .item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bridge-legend .swatch {
+  display: inline-block;
+  width: 24px;
+  height: 3px;
+  background: #cbd5e1;
+}
+.bridge-legend .swatch.tree { background: #3b82f6; }
+.bridge-legend .swatch.back { background: repeating-linear-gradient(to right, #94a3b8 0 5px, transparent 5px 9px); height: 2px; }
+.bridge-legend .swatch.bridge { background: #ef4444; height: 4px; }
+.bridge-legend .swatch.current { background: #f59e0b; height: 4px; }
