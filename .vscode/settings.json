@@ -1,30 +1,13 @@
 {
-  // Prettier
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true,
-  // Shopify Liquid
-  "files.associations": {
-    "*.html": "liquid"
+  // 이 저장소의 HTML 은 전부 JS 태그드 템플릿 안에 있다. Liquid 연결이 필요 없다.
+  "css.validate": true,
+  "files.exclude": {
+    "_site": true,
+    "node_modules": true
   },
-  "[markdown]": {
-    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
-  },
-  // Formatter
-  "[html][liquid]": {
-    "editor.defaultFormatter": "Shopify.theme-check-vscode"
-  },
-  "[shellscript]": {
-    "editor.defaultFormatter": "mkhl.shfmt"
-  },
-  // Disable vscode built-in stylelint
-  "css.validate": false,
-  "scss.validate": false,
-  "less.validate": false,
-  // Stylint extension settings
-  "stylelint.snippet": ["css", "scss"],
-  "stylelint.validate": ["css", "scss"],
-  // Run tasks in macOS
-  "terminal.integrated.profiles.osx": {
-    "zsh": { "path": "/bin/zsh", "args": ["-l", "-i"] }
+  "search.exclude": {
+    "_site": true,
+    "node_modules": true,
+    "package-lock.json": true
   }
 }

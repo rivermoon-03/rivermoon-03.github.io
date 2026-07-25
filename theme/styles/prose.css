@@ -1,0 +1,213 @@
+/*
+ * 본문 타이포그래피.
+ *
+ * 읽는 경험이 이 사이트의 1순위다. 폭은 --measure(68ch)로 묶고, 세로 리듬은
+ * 요소 사이 여백을 한 방향(margin-top)으로만 줘서 무너지지 않게 한다.
+ */
+
+.prose {
+  max-width: var(--measure);
+  line-height: var(--leading-loose);
+}
+
+.prose > * + * {
+  margin-top: var(--space-4);
+}
+
+/* ── 헤딩 ─────────────────────────────────────────────────── */
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  margin-top: var(--space-7);
+  scroll-margin-top: 5.5rem;
+}
+
+.prose h1 {
+  font-size: var(--text-2xl);
+}
+
+/*
+ * h2 왼쪽에 호박색 세로 표식을 세운다. 큰 글에서 절(節)의 시작이 눈에 걸린다.
+ * 가로 괘선 대신 이걸 쓰는 이유는 괘선이 화면을 자꾸 잘라 답답해 보이기 때문.
+ *
+ * 표식을 왼쪽 여백에 매다는(hanging) 방식은 쓰지 않는다. 셸 폭이 뷰포트와
+ * 거의 같아지는 구간(768~1300px)에서 표식이 화면 가장자리에 달라붙기 때문.
+ * 대신 제목을 살짝 들여쓴다 — 목차와 목록 호버에서 이미 쓰는 "왼쪽 세로선"
+ * 모티프와 같은 계열이라 의도적으로 읽힌다.
+ */
+.prose h2 {
+  font-size: var(--text-xl);
+  padding-left: var(--space-4);
+  border-left: 3px solid var(--accent);
+}
+
+.prose h3 {
+  font-size: var(--text-lg);
+}
+
+.prose h4 {
+  font-size: var(--text-base);
+  color: var(--ink-muted);
+}
+
+/* 헤딩 바로 뒤 문단은 붙여서 묶음으로 보이게 한다. */
+.prose h1 + *,
+.prose h2 + *,
+.prose h3 + *,
+.prose h4 + * {
+  margin-top: var(--space-3);
+}
+
+/* ── 링크 ─────────────────────────────────────────────────── */
+.prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  transition: text-decoration-color var(--duration) var(--ease);
+}
+
+.prose a:hover {
+  text-decoration-color: var(--accent);
+}
+
+/* ── 목록 ─────────────────────────────────────────────────── */
+.prose ul,
+.prose ol {
+  padding-left: var(--space-5);
+}
+
+.prose li + li {
+  margin-top: var(--space-2);
+}
+
+.prose li::marker {
+  color: var(--ink-faint);
+}
+
+.prose ul ul,
+.prose ol ol,
+.prose ul ol,
+.prose ol ul {
+  margin-top: var(--space-2);
+}
+
+/* GFM 태스크리스트 */
+.prose li:has(> input[type='checkbox']) {
+  list-style: none;
+  margin-left: calc(var(--space-5) * -1);
+}
+
+.prose input[type='checkbox'] {
+  margin-right: var(--space-2);
+  accent-color: var(--accent);
+}
+
+/* ── 인용 ─────────────────────────────────────────────────── */
+.prose blockquote {
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--accent);
+  color: var(--ink-muted);
+}
+
+.prose blockquote > * + * {
+  margin-top: var(--space-3);
+}
+
+/* GFM alert (`> [!NOTE]`) — remark-gfm 이 만드는 마크업에 대응. */
+.prose .markdown-alert {
+  padding: var(--space-4);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--bg-sunken);
+}
+
+/* ── 표 ───────────────────────────────────────────────────── */
+/* 넓은 표가 페이지 전체를 가로 스크롤시키지 않도록 표만 스크롤된다. */
+.prose table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  font-size: var(--text-sm);
+  border: var(--rule) solid var(--line);
+  border-radius: var(--radius);
+}
+
+.prose th,
+.prose td {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  border-bottom: var(--rule) solid var(--line);
+}
+
+.prose th {
+  background: var(--bg-sunken);
+  font-weight: 700;
+  color: var(--ink-strong);
+  white-space: nowrap;
+}
+
+.prose tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── 이미지 ───────────────────────────────────────────────── */
+/*
+ * Chirpy 는 이미지에 그라디언트 필터를 씌워서 기존 style.scss 가 `filter: none
+ * !important` 로 걷어내고 있었다. 애초에 그런 걸 걸지 않는다.
+ */
+.prose img {
+  border-radius: var(--radius);
+  border: var(--rule) solid var(--line);
+  background: var(--bg-raised);
+  margin-inline: auto;
+}
+
+.prose figure {
+  margin-top: var(--space-5);
+}
+
+.prose figcaption {
+  margin-top: var(--space-2);
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+/* ── 기타 ─────────────────────────────────────────────────── */
+.prose hr {
+  border: none;
+  border-top: var(--rule) solid var(--line);
+  margin-block: var(--space-7);
+}
+
+.prose kbd {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 1px var(--space-2);
+  border: var(--rule) solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-raised);
+}
+
+.prose del {
+  color: var(--ink-faint);
+}
+
+.prose sup a {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-decoration: none;
+}
+
+/* 각주 영역 */
+.prose .footnotes {
+  margin-top: var(--space-7);
+  padding-top: var(--space-4);
+  border-top: var(--rule) solid var(--line);
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}

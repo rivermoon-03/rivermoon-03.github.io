@@ -1,0 +1,74 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - .gitignore
+      - README.md
+      - LICENSE
+      - docs/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 배포는 한 번에 하나만.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # 글의 마지막 수정일을 git 로그에서 읽는다 (engine/git.js).
+          # 얕은 클론이면 수정일이 전부 틀어진다.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: 단위 테스트
+        run: npm test
+
+      - name: 빌드
+        run: npm run build
+
+      # ── 전환 안전벨트 ────────────────────────────────────────────
+      # Jekyll 시절 라이브 사이트에 존재하던 URL 45개가 산출물에 전부 있는지
+      # 확인한다. 하나라도 빠지면 여기서 배포가 멈춘다. 한글 슬러그 규칙이
+      # 조금이라도 어긋나면 포스트 21개가 통째로 404가 나기 때문에, 이 검사는
+      # 선택이 아니라 필수다. 기준 목록: engine/__fixtures__/live-urls.txt
+      - name: 기존 URL 보존 검증
+        run: npm run verify:urls
+
+      # html-proofer 대체. 내부 링크만 검사한다 (외부 사이트 사정으로
+      # 우리 배포가 막히지 않도록).
+      - name: 내부 링크 검증
+        run: npm run verify:links
+
+      - uses: actions/configure-pages@v4
+        id: pages
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

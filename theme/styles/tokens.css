@@ -1,0 +1,198 @@
+/*
+ * 디자인 토큰 — 이 파일이 색·타이포·간격의 유일한 출처다.
+ *
+ * Chirpy 를 쓰면서 겪은 문제가 "값이 여기저기 흩어져 있어서 !important 로만 덮을 수
+ * 있다"였다. 그래서 규칙을 하나 세운다:
+ *   다른 CSS 파일에는 리터럴 색상값을 쓰지 않는다. 전부 여기 변수를 참조한다.
+ *
+ * 컨셉: 검은 종이 위의 호박색 잉크.
+ *   - 다크가 기본 정체성이다 (순수 검정 #000). 화면에서 대비가 가장 세다.
+ *   - 라이트는 흰색이 아니라 따뜻한 종이색. 순백은 눈이 아프고 흔하다.
+ *   - 강조색은 호박색 계열 하나만 쓴다. 라이트에서는 대비를 위해 더 어두운 톤으로 내린다.
+ *   - 메타 정보(날짜·태그·읽는 시간)는 전부 모노스페이스. 알고리즘 블로그의 성격을
+ *     타이포그래피로 드러내는 장치이자, 본문 세리프감과 대비를 만든다.
+ */
+
+:root {
+  /* ── 타이포 ───────────────────────────────────────────── */
+  /*
+   * macOS 가 SF Pro 하나로 UI 전체를 끌고 가고 SF Mono 는 코드에만 쓰는 것처럼,
+   * 여기서도 Pretendard 하나로 통일한다. 숫자 정렬이 필요한 곳은 폰트를 바꾸는
+   * 대신 `font-variant-numeric: tabular-nums` 로 해결한다 — Pretendard 가 지원한다.
+   */
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+    system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --font-meta: var(--font-sans);
+
+  /* 코드 전용. 한글 폴백도 고정폭(D2Coding)으로 둬야 주석이 든 코드의 열이 안 어긋난다. */
+  --font-mono: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Mono',
+    Menlo, Consolas, 'D2Coding', 'Nanum Gothic Coding', monospace;
+
+  /* 좁은 화면에서 커지고 넓은 화면에서 안정되는 유동 스케일. */
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.1875rem;
+  --text-xl: clamp(1.25rem, 1.1rem + 0.7vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.25rem + 1.2vw, 2rem);
+  --text-3xl: clamp(1.875rem, 1.4rem + 2.2vw, 2.75rem);
+  --text-4xl: clamp(2.25rem, 1.5rem + 3.4vw, 3.5rem);
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.4;
+  --leading-normal: 1.75;
+  --leading-loose: 1.85;
+
+  /* 한글은 자간을 살짝 좁혀야 덩어리로 읽힌다. */
+  --tracking-tight: -0.022em;
+  --tracking-normal: -0.011em;
+  /*
+   * 자간을 벌리는 건 라틴 문자 라벨(GITHUB, PYTHON)에만 쓴다.
+   * 한글에 적용하면 글자가 낱개로 흩어져 오히려 읽기 나빠진다 — 한글 라벨에는
+   * --tracking-label-ko 를 쓸 것.
+   */
+  --tracking-wide: 0.06em;
+  --tracking-label-ko: 0;
+
+  /* ── 간격 ─────────────────────────────────────────────── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+
+  /* ── 치수 ─────────────────────────────────────────────── */
+  --measure: 68ch;          /* 본문 최대 폭. 한글 기준 읽기 편한 한 줄 길이 */
+  --shell-max: 78rem;       /* 헤더·본문·푸터가 공유하는 최대 폭 */
+  --aside-width: 14rem;
+  --toolbar-height: 3.5rem;
+
+  /*
+   * 모서리. Tahoe 26 은 과장되게 둥글었는데 2026 업데이트에서 다시 눌렸다.
+   * 그 방향을 따라 절제된 값을 쓴다. 중첩된 요소는 안쪽이 더 작아야 동심으로
+   * 보이므로(concentric radius) 바깥에서 안으로 내려가는 계단을 만들어 뒀다.
+   */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius: 9px;
+  --radius-lg: 13px;
+  --radius-xl: 18px;
+  --radius-pill: 999px;
+  --rule: 1px;
+
+  /* ── 모션 ─────────────────────────────────────────────── */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);        /* macOS 기본 감속 곡선에 가깝다 */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /*
+   * 스프링 근사. 진짜 스프링은 CSS 로 못 만들지만, 살짝 넘어갔다 돌아오는
+   * 오버슈트를 넣으면 "튕겨서 자리를 잡는" 느낌이 난다. 사이드바 토글처럼
+   * 사용자가 직접 일으킨 큰 움직임에만 쓴다. 아무 데나 쓰면 산만해진다.
+   */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 120ms;
+  --duration: 200ms;
+  --duration-slow: 380ms;
+}
+
+/*
+ * ── 색 ────────────────────────────────────────────────────────────────────
+ *
+ * 라이트/다크 값을 `light-dark()` 로 한 줄에 적는다. 예전에는 같은 변수 묶음을
+ * :root / [data-theme='dark'] / @media(prefers-color-scheme) 세 곳에 복붙해야 했고,
+ * 한 곳만 고치면 조용히 어긋났다. 실제 선택은 아래 color-scheme 세 줄이 한다.
+ *
+ * 컨셉: 검은 유리 위의 호박색 잉크.
+ *   - 다크가 기본 정체성이다 (순수 검정 #000).
+ *   - 라이트는 흰색이 아니라 따뜻한 종이색. 순백은 눈이 아프고 흔하다.
+ *   - 강조색은 호박색 하나. 라이트에서는 대비를 위해 더 어두운 톤으로 내린다.
+ */
+
+:root { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) { color-scheme: dark; }
+}
+
+:root {
+  --bg:        light-dark(#fbfaf7, #000000);
+  --bg-raised: light-dark(#ffffff, #0c0c0d);
+  --bg-sunken: light-dark(#f2f0ea, #08080a);
+  --bg-inset:  light-dark(#eceae3, #141416);
+
+  --ink:        light-dark(#16151a, #e6e3dd);
+  --ink-strong: light-dark(#000000, #ffffff);
+  --ink-muted:  light-dark(#605e58, #9a978f);
+  --ink-faint:  light-dark(#8b8880, #6b6862);
+
+  --line:        light-dark(#dedbd2, #232326);
+  --line-strong: light-dark(#c4c0b4, #35353a);
+
+  /* 종이 위에서 4.5:1 을 넘기려면 호박색을 이만큼 내려야 한다. */
+  --accent:          light-dark(#9a6206, #f5cb42);
+  --accent-hover:    light-dark(#7c4e05, #ffe08a);
+  --accent-contrast: light-dark(#ffffff, #000000);
+  --accent-wash:     light-dark(#f6edd8, #1c1710);
+
+  --selection: light-dark(#f7e4b0, #3d3211);
+
+  --shadow-sm: light-dark(
+    0 1px 2px rgb(20 18 12 / 8%),
+    0 1px 2px rgb(0 0 0 / 60%)
+  );
+  --shadow: light-dark(
+    0 1px 2px rgb(20 18 12 / 6%), 0 8px 24px -12px rgb(20 18 12 / 18%)
+  ,
+    0 1px 2px rgb(0 0 0 / 60%), 0 8px 24px -12px rgb(0 0 0 / 80%)
+  );
+  --shadow-lg: light-dark(
+    0 2px 6px rgb(20 18 12 / 8%), 0 24px 60px -20px rgb(20 18 12 / 28%)
+  ,
+    0 2px 6px rgb(0 0 0 / 70%), 0 24px 60px -20px rgb(0 0 0 / 90%)
+  );
+}
+
+/*
+ * ── Liquid Glass ──────────────────────────────────────────────────────────
+ *
+ * macOS 26 계열의 재질을 CSS 로 근사한다. 진짜 굴절(refraction)은 SVG 변위
+ * 필터나 WebGL 이 필요하고 스크롤할 때마다 다시 그려야 해서 블로그에는 과하다.
+ * 대신 Apple 이 말하는 세 겹 — 조명(illumination) / 하이라이트(highlight) /
+ * 그림자(shadow) — 을 각각 CSS 한 겹씩에 대응시킨다.
+ *
+ *   --glass-tint       조명: 뒤 내용을 비치게 하면서 살짝 물들이는 층
+ *   --glass-highlight  하이라이트: 위쪽 모서리의 스페큘러(빛 반사)
+ *   --glass-edge       그림자: 아래쪽 어두운 테두리. 2026 업데이트에서
+ *                      "어두운 가장자리 + 밝은 하이라이트로 분리감 확보"가
+ *                      강조된 부분이라 대비를 분명히 준다.
+ */
+:root {
+  --glass-tint: light-dark(rgb(255 255 255 / 62%), rgb(22 22 24 / 58%));
+  --glass-tint-strong: light-dark(rgb(255 255 255 / 82%), rgb(24 24 27 / 80%));
+  --glass-blur: 20px;
+  --glass-saturate: 180%;
+  --glass-highlight: light-dark(rgb(255 255 255 / 85%), rgb(255 255 255 / 16%));
+  --glass-edge: light-dark(rgb(20 18 12 / 10%), rgb(0 0 0 / 65%));
+  --glass-border: light-dark(rgb(255 255 255 / 60%), rgb(255 255 255 / 9%));
+}
+
+/*
+ * 투명도를 줄여달라는 설정이면 유리를 불투명하게 바꾼다.
+ *
+ * 이게 장식이 아니라 필수인 이유: 반투명 위의 글자는 뒤에 뭐가 오느냐에 따라
+ * 대비가 매번 달라진다. 밝은 이미지 위에서는 4.5:1 이 그냥 무너진다.
+ * Apple 도 베타를 거치며 불투명도를 계속 올렸고 결국 사용자 조절 슬라이더를 넣었다.
+ * 우리는 OS 설정을 그대로 따른다.
+ */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-tint: var(--bg-raised);
+    --glass-tint-strong: var(--bg-raised);
+    --glass-blur: 0px;
+    --glass-saturate: 100%;
+    --glass-highlight: transparent;
+  }
+}

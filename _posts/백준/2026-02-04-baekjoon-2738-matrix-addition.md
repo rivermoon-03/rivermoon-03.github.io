@@ -1,0 +1,31 @@
+---
+title: "백준 2738 - 행렬 덧셈"
+date: 2026-02-04 00:00:00 +0900
+categories: [백준]
+tags: [백준]
+toc: true
+redirect_from:
+  - /posts/baekjoon-2738/
+---
+
+# 2738번 - 행렬 덧셈
+```python
+# 행렬 하나 당 n줄의 input를 써먹고..
+n, m = map(int, input().split())
+a = [list(map(int, input().split())) for _ in range(n)]
+
+# a, b 행렬을 만들고 더하는것보다 이 과정에서 a[0][0]~a[n][m] 까지 더해주는게 나을 듯.
+for i in range(n):
+    tmp = list(map(int, input().split()))
+    for j in range(m):
+        a[i][j] += tmp[j]
+
+for row in a:
+    print(*row)
+```
+
+
+행렬에 대응하는 2개의 리스트를 만들어 처리하는 방식을 고민하였다가,
+굳이 그렇게 할 필요가 있나 생각이 들어 이렇게 처리했습니다.
+
+메모리를 아낀다는 장점도 챙길 수 있고요.

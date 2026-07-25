@@ -1,27 +1,18 @@
-# Bundler cache
-.bundle
-vendor
-Gemfile.lock
-
-# Jekyll cache
-.jekyll-cache
-.jekyll-metadata
+# 빌드 산출물
 _site
+.dev-site
 
-# RubyGems
-*.gem
-
-# NPM dependencies
+# NPM
 node_modules
-package-lock.json
+# package-lock.json 은 커밋한다 — CI 의 `npm ci` 가 이 파일을 요구하고,
+# 없으면 빌드마다 의존성 버전이 달라진다.
 
-# IDE configurations
+# IDE
 .idea
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
 !.vscode/tasks.json
 
-# Misc
-_sass/vendors
-assets/js/dist
+# OS
+.DS_Store

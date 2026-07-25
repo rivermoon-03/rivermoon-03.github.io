@@ -1,0 +1,321 @@
+---
+title: "네트워크 프로그래밍 - 소켓 만들고 TCP 통신하기 [1]"
+date: 2026-03-24 22:28:40 +0900
+categories: [잡담]
+tags: [수업, 잡담]
+redirect_from:
+  - /posts/네트워크-프로그래밍-소켓-만들고-tcp-통신하기-1/
+---
+
+소스 주소 : [exgs
+/
+ambition_socket_programming](https://github.com/exgs/ambition_socket_programming)
+
+## 0. 함수들 설명 + 코드 작성 전 설계
+
+TCP 소켓은 전화기에 비유될 수 있다.
+클라이언트가 서버와 통신하기 위해서는,
+ - 서버와 클라이언트 모두 전화기를 가지고 있어야 하고 `socket()`, 전화번호를 가지고 있어야 한다. `bind()`
+ - 서버는 전화를 받을 준비가 되어있어야 한다. `listen()`
+ - 클라이언트에게 전화가 오면, 서버는 수화기를 들어 서버의 요청을 수락해준다. `accept()`
+ - 양쪽의 대화는 
+ - 용건이 끝나면 수화기를 내려야 한다. `close()`
+---
+
+### 함수 - 파일 관련 함수들
+ > `unistd.h` 헤더 파일에 구현되어 있다.
+#### open
+ - 파일을 열고, fd를 반환한다. (파일 디스크립터)
+> fd는 파일이나 소켓 등에 부여해주는 일종의 번호표이다. 이 번호를 알고 있으면 그 파일/소켓을 불러올 수 있다.
+
+
+> `int open(const char *pathname, int flags, mode_t mode)`<br>
+
+- `pathname` : 파일 경로
+- `flags` : 플래그
+  - O_RDONLY, O_WRONLY, O_TRUNC, O_CREAT 가 있다.
+    - O_RDONLY : 읽기
+    - O_WRONLY : 쓰기
+    - O_TRUNC : 기존 내용 비우기
+    - O_CREAT : 없으면 만들기
+ - `mode` : 권한을 뜻한다. 리눅스에서 사용하는 0644, 0755 같은 형식.
+
+성공 시 fd (양수) 를 반환, 실패 시 -1을 반환한다.
+
+#### close
+- fd를 닫고 리소스를 해제한다.<br>
+> `int close(int fd)`
+
+성공 시 0 반환, 실패 시 -1 반환.
+
+#### read
+ - fd에서 count 바이트 만큼 읽어 buf에 저장한다.<br>
+>`ssize_t read(int fd, const void *buf, size_t count)`<br>
+
+- 성공 시 읽은 바이트 (양수)를 반환한다. 파일 끝이거나 연결 종료 시 0을 반환한다.
+- 실패 (에러) 시에는 -1을 반환한다.
+
+#### write
+- fd에 buf에 있는 count 바이트 만큼의 데이터를 쓴다.<br>
+>`ssize_t write(int fd, const void *buf, size_t count)`<br>
+
+- 성공 시 쓴 바이트 (양수)를 반환한다. 파일 끝이거나 연결 종료 시 0을 반환한다.
+- 실패 (에러) 시에는 -1을 반환한다.
+
+### 함수 - 소켓 관련 함수들
+ > `sys/socket.h에 구현되어 있다` 
+
+#### socket - 전화기 부여하기 (공통)
+- 소켓을 생성한다.
+
+> `int socket(int domain, int type, int protocol)`
+ - TCP/IP + IPv4 환경에서는
+   - domain = PF_INET, type = SOCK_STREAM, protocol = 0 으로 둔다.
+
+#### bind - 전화기에 전화번호 부여하기 (공통)
+ - 소켓에 IP 주소와 포트 등의 정보를 부여해준다.
+> `int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)`
+ - addrlen : addr의 길이
+
+```c
+struct sockaddr_in {
+    sa_family_t       sin_family;    // 주소 체계
+    in_port_t         sin_port;      // 포트 번호 (네트워크 바이트 순서
+    struct in_addr    sin_addr;      // IP 주소
+    unsigned char     sin_zero[8];   // 패딩 (sockaddr과 크기 맞추기)
+};
+
+struct in_addr {
+    in_addr_t s_addr; // 32비트 IPv4 주소 (네트워크 바이트 순서)
+};
+``` 
+
+ - 성공 시 0, 실패 시 -1을 반환한다.
+
+#### listen - 걸려오는 전화를 받을 준비 하기 (서버)
+ - 매개 변수로 주어진 소켓을 대기 상태로 전환시킨다. bind 과정이 선행되어야 한다.
+
+> ```int listen(int sockfd, int backlog)```<br>
+
+ - sockfd : 소켓 fd
+ - backlog : 대기 큐 크기
+ - 성공 시 0, 실패 시 -1
+
+#### accept - 전화 받기 (서버)
+
+> ```int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)```<br>
+
+ - sockfd : **listen 상태의** 서버 소켓 fd
+ - addr : 연결한 클라이언트의 정보가 저장된다. 자료형은 `struct sockaddr` 로, bind 시의 그것과 동일하다.
+ - addrlen : addr의 길이
+
+#### connect - 전화 걸기 (클라이언트)
+
+> `int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)`
+
+  - sockfd - socket()이 반환한 fd
+  - addr - 서버 정보 구조체
+  - addrlen - sizeof(serv_addr)
+- 성공 시 0, 실패 시 -1
+
+예시
+```c
+int number[100];
+memset(&number, 0, sizeof(number));
+```
+
+
+
+### 기타 함수 - 바이트 변환
+ - CPU마다 다중 바이트 저장 순서가 다르다.
+
+상위 바이트의 값을 작은 번지수에 저장하느냐, 큰 번지 수에 저장하느냐에 따라 **빅 엔디안, 리틀 엔디안** 이라는 방식으로 나뉜다.
+
+`0x12345678` 이라는 32비트 정수를 저장할 때를 예시로 두자.
+ - 빅 엔디안 : 0x12, 0x34, 0x56, 0x78 순으로 저장한다.
+ - 리틀 엔디안 : 반대로, 0x78, 0x56, 0x34, 0x12 순으로 저장한다.
+
+보통 x86 아키텍쳐 CPU들은 리틀 엔디안 방식으로 저장하지만, 네트워크에서는 빅 엔디안으로 저장한다.
+
+#### htons (포트용)
+ - 호스트 바이트 순서를 네트워크 바이트 순서로 바꾼다.
+
+> ```uint16_t htons(uint16_t hostshort)```
+
+sin_port에 포트 정보를 넣을 때, `"9190" -> atoi("9190") -> htons(atoi("9190"))` 의 과정을 거친다.
+
+네트워크 바이트 순서 (16비트) 를 반환한다.
+
+#### htonl (IP용)
+ - 호스트 바이트 순서를 네트워크 바이트 순서로 바꾼다.
+
+> ```uint32_t htons(uint32_t hostshort)```
+
+네트워크 바이트 순서 (32비트) 를 반환한다.
+
+#### inet_addr ( 사람 -> 컴퓨터 )
+ - 점십진법 문자열 (예 : "127.0.0.1") 을 32비트 네트워크 바이트 순서 정수로 저장한다.
+
+
+#### inet_aton
+
+> ```int inet_aton(const char *cp,struct in_addr *inp);```
+
+문자열 IP를 struct in_addr에 저장한다. inet_addr 대비 에러 구분이 가능하다.
+
+반환값은 성공 시 1, 실패 시 0이다.
+
+#### inet_ntoa
+
+> ```char *inet_ntoa(struct in_addr in);```
+
+32비트 IP를 “127.0.0.1”처럼 점십진법 형태 문자열로 변환한다. “정적 버퍼”를 반환한다. 연속 호출 시 이전 결과가 덮어씌워진다. strcpy로 복사하여 주로 사용한다.
+
+
+**주의사항**
+
+`int c` 부분을 보면, `int` 자료형으로 인자를 받을 것 같기 생겼지만 사실 `unsigned char`로 받는다. `byte, long` 등 1바이트 넘어가는 자료형으로 넣어버리면 문제가 생길 수 있기에 주로 `0, char 자료형` 을 사용한다.
+
+## 서버쪽 코드 : hello_server.c
+> 임의로 바꾼 부분들이 있다.
+
+### 작동 순서
+
+#### 변수들
+- 서버 소켓 fd와 클라이언트 소켓 fd를 저장할 정수형 변수
+- 서버와 클라이언트의 주소 / 포트 정보를 저장할 `struct sockaddr_in` 자료형을 가진 변수
+- 클라이언트의 서버 정보 구조체 크기(길이)를 저장할 `socklen_t` 자료형을 가진 변수
+
+#### 함수들
+ - 소켓을 구성하고 `socket()`
+ - 소켓에 정보를 넣어주고 `bind()`
+ - 소켓을 대기 상태로 만들어주고 `listen()`
+ - 클라이언트 소켓 - 서버 소켓을 연결해주고 `accept()`
+ - 데이터를 써주고 `write()`
+ - 닫아주고 `close()`
+
+#### 코드
+```c
+#include <arpa/inet.h> // inet 관련 함수들 (네트워크)
+#include <stdio.h> // printf, scanf 함수들
+#include <stdlib.h> // atoi, exit 함수 등
+#include <string.h> // memset, strlen 함수들
+#include <sys/socket.h> // socket, bind, listen, accept 함수들 (소켓)
+#include <unistd.h> // read, write, close 함수들 (파일)
+
+
+int main(int argc, char *argv[]){
+    int server_socket_fd, client_socket_fd; // 서버, 클라 fd
+    struct sockaddr_in server_address, client_address; // 서버 클라 정보 구조체
+    socklen_t client_address_size; // 클라 정보 길이 (accept()에서 사용)
+    char message[] = "test message";
+
+    // 인자 2개 아니면 빠꾸
+    if (argc != 2) {
+        printf("usage : %s <port> \n", argv[0]);
+    }
+
+    // socket()
+    server_socket_fd = socket(PF_INET, SOCK_STREAM, 0);
+    // domain : PF_INET (IPv4), type: SOCK_STREAM (TCP), protocol : 0 (AUTO)
+    printf("서버 소켓 FD : %d\n--socket() 완료--\n", server_socket_fd); // -1이면 오류. 3 이상의 정수면 성공.
+
+    // bind()
+    // server_address 구조체를 0으로 밀어준다.
+    memset(&server_address, 0, sizeof(server_address));
+
+    server_address.sin_family = AF_INET; // 주소 체계 : IPv4
+    server_address.sin_addr.s_addr = htonl(INADDR_ANY); // INADDR_ANY : 모든 IP 범위를 말함.
+    // 빅 엔디안에 맞추기 위해 htonl을 사용했다.
+    server_address.sin_port = htons(atoi(argv[1]));
+    // 상술한 대로, argv[1] (인자로 들어온 포트 번호 문자열) -> (정수) -> (16비트 네트워크 바이트) 로 변환
+    printf("bind() 상태 : %d\n--bind() 완료--\n", bind(server_socket_fd, (struct sockaddr*) &server_address, sizeof(server_address)));
+    // -1이면 실패, 0이면 성공
+
+    // listen()
+    printf("listen() 상태 : %d\n--listen() 완료. 클라이언트 대기..--\n", listen(server_socket_fd, 5));
+    // -1이면 실패, 0이면 성공
+
+    // accept()
+    client_address_size = sizeof(client_address);
+    client_socket_fd = accept(server_socket_fd, (struct sockaddr*) &client_address, &client_address_size);
+    printf("클라이언트 소켓 FD : %d\n--accept() 완료--\n", server_socket_fd); // -1이면 오류. 3 이상의 정수면 성공.
+
+    // write()
+    write(client_socket_fd, message, sizeof(message));
+    printf("client fd %d에 %s 메시지를 보냄..", client_socket_fd, message);
+
+    // close()
+    close(server_socket_fd);
+    close(client_socket_fd);
+}
+```
+
+
+## 서버쪽 코드 : client_server.c
+> 임의로 바꾼 부분들이 있다.
+
+### 작동 순서
+
+#### 변수들
+- 클라이언트 소켓 fd를 저장할 정수형 변수
+- 서버의 주소 / 포트 정보를 저장할 `struct sockaddr_in` 자료형을 가진 변수
+- 서버에서 보내준 메시지를 저장할 문자열 변수
+- 문자열의 길이를 저장할 정수형 변수
+
+#### 함수들
+ - 소켓을 구성하고 `socket()`
+ - 서버에 연결하고 `connect()`
+ - 메시지를 받고 `read()`
+ - 사용자에게 출력하고 `printf()`
+ - 소켓을 닫고 `close()`3
+
+#### 코드
+```c
+#include <arpa/inet.h> // inet 관련 함수들 (네트워크)
+#include <stdio.h> // printf, scanf 함수들
+#include <stdlib.h> // atoi, exit 함수 등
+#include <string.h> // memset, strlen 함수들
+#include <sys/socket.h> // socket, bind, listen, accept 함수들 (소켓)
+#include <unistd.h> // read, write, close 함수들 (파일)
+
+int main(int argc, char* argv[]){
+    int client_socket_fd;
+    struct sockaddr_in server_address;
+
+    char message[100];
+    int str_len;
+
+    if (argc != 3) {
+        printf("usage : %s <IP> <PORT>", argv[0]);
+        // argv[1] : IP주소, [2] : 포트
+    }
+
+    // socket()
+    client_socket_fd = socket(PF_INET, SOCK_STREAM, 0);
+    printf("socket() 완료. client fd : %d\n", client_socket_fd);
+
+    // connect() + server_address 구조체 구성해주기
+    memset(&server_address, 0, sizeof(server_address));
+    server_address.sin_family = AF_INET;
+    server_address.sin_addr.s_addr = inet_addr(argv[1]);
+    server_address.sin_port = htons(atoi(argv[2]));
+
+    printf("connect() 시도 결과 : %d (-1 : 실패, 0 : 성공)\n", connect(client_socket_fd, (struct sockaddr *) &server_address, sizeof(server_address)));
+
+    // read()
+    str_len = read(client_socket_fd, message, sizeof(message) - 1);
+    // 마지막엔 '\0' 넣어서, 버퍼 오버런 되는 것을 방지해 주어야 함.
+    printf("메시지 받음. 문자열 길이 : %d\n", str_len);
+    if (str_len == -1) printf("읽어들이지 못함.");
+    message[str_len] = '\0'; // 마지막은 널 문자로
+
+    printf("읽은 문자 : %s\n", message);
+    close(client_socket_fd);
+    printf("연결 과정 끝");
+
+}
+```
+
+
+![test.png](/assets/images/잡담/test-1773473368179.png)

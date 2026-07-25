@@ -1,0 +1,190 @@
+/*
+ * 뼈대 — 헤더, 본문, 인스펙터, 푸터.
+ *
+ *   ┌────────────────────────────────────────┐
+ *   │  헤더 (유리, 고정 높이, sticky)          │
+ *   ├──────────────────────────┬─────────────┤
+ *   │  본문                     │ 인스펙터     │
+ *   │                          │ (목차)       │
+ *   ├──────────────────────────┴─────────────┤
+ *   │  푸터                                   │
+ *   └────────────────────────────────────────┘
+ *
+ * 사이드바를 두지 않는다. 본문이 쓸 수 있는 가로 폭이 늘고, 좁은 화면에서
+ * 구조가 단순해진다. 목차만 넓은 화면에서 오른쪽에 붙는다.
+ */
+
+body {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 헤더 ─────────────────────────────────────────────────── */
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  min-height: var(--toolbar-height);
+}
+
+.masthead__inner {
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  min-height: var(--toolbar-height);
+  padding: var(--space-2) var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.masthead__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-right: auto;
+  min-width: 0;
+}
+
+.masthead__title {
+  font-weight: 800;
+  font-size: var(--text-lg);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-strong);
+  white-space: nowrap;
+}
+
+/*
+ * 로고 아래 캡션. 고정폭 폰트로 두면 한글 자폭이 억지로 벌어져 흩어져 보이므로
+ * 본문과 같은 Pretendard 를 쓴다.
+ */
+.masthead__tagline {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.masthead__nav {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.masthead__actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+/* 좁은 화면에서는 브랜드 아래로 내비게이션을 흘려보낸다. */
+@media (max-width: 48rem) {
+  .masthead__inner {
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .masthead__nav {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: var(--space-1);
+  }
+
+  .masthead__nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .masthead__tagline {
+    display: none;
+  }
+}
+
+/* ── 본문 ─────────────────────────────────────────────────── */
+.canvas {
+  flex: 1;
+  width: 100%;
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  padding: var(--space-7) var(--space-5) var(--space-9);
+}
+
+/*
+ * 본문 폭을 헤더보다 좁게 잡되, 가운데 정렬이 아니라 왼쪽 정렬로 둔다.
+ * 가운데로 몰면 헤더의 로고와 본문 시작점이 어긋나 흐트러져 보인다. 왼쪽을
+ * 맞추면 목록의 날짜가 제목에서 지나치게 멀어지는 문제도 같이 해결된다.
+ */
+.canvas__main {
+  min-width: 0;
+  max-width: 52rem;
+}
+
+/*
+ * 목차가 있는 페이지만 2단이 된다. 본문은 --measure 로 이미 묶여 있으므로
+ * 인스펙터가 붙어도 읽는 폭은 그대로다.
+ */
+@media (min-width: 64rem) {
+  .canvas--with-aside {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--aside-width);
+    gap: var(--space-8);
+    align-items: start;
+  }
+
+  .canvas__aside {
+    position: sticky;
+    top: calc(var(--toolbar-height) + var(--space-5));
+    max-height: calc(100dvh - var(--toolbar-height) - var(--space-7));
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
+
+@media (max-width: 63.999rem) {
+  .canvas__aside {
+    display: none;
+  }
+}
+
+@media (max-width: 48rem) {
+  .canvas {
+    padding: var(--space-6) var(--space-4) var(--space-8);
+  }
+}
+
+/* ── 푸터 ─────────────────────────────────────────────────── */
+.site-footer {
+  border-top: var(--rule) solid var(--line);
+  background: var(--bg-sunken);
+}
+
+.site-footer__inner {
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.site-footer a:hover {
+  color: var(--accent);
+}
+
+.site-footer__links {
+  display: flex;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+}
+
+.site-footer__links a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition: color var(--duration-fast) var(--ease);
+}

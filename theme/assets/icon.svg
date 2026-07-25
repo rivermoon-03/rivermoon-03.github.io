@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RIVERMOON">
+  <!--
+    PWA 설치 아이콘. 사이트 정체성(검은 바탕 + 호박색)을 그대로 쓴다.
+    래스터 대신 SVG 한 장으로 모든 크기를 감당한다 (manifest 의 sizes: "any").
+    강 위에 뜬 달을 최소한의 도형으로 — 이름(rivermoon)에서 왔다.
+  -->
+  <rect width="512" height="512" rx="112" fill="#000000"/>
+  <circle cx="256" cy="196" r="84" fill="#f5cb42"/>
+  <path d="M64 336c48-26 96-26 144 0s96 26 144 0 96-26 96 0"
+        fill="none" stroke="#f5cb42" stroke-width="26" stroke-linecap="round" opacity="0.55"/>
+  <path d="M64 404c48-26 96-26 144 0s96 26 144 0 96-26 96 0"
+        fill="none" stroke="#f5cb42" stroke-width="26" stroke-linecap="round" opacity="0.28"/>
+</svg>

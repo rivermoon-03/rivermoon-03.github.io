@@ -2,74 +2,39 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Run Jekyll Server",
-      "type": "shell",
-      "command": "./tools/run.sh",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
+      "label": "개발 서버",
+      "type": "npm",
+      "script": "dev",
+      "group": { "kind": "build", "isDefault": true },
       "problemMatcher": [],
-      "detail": "Runs the Jekyll server with live reload."
+      "isBackground": true,
+      "detail": "http://localhost:4321 — 저장하면 자동 새로고침",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
     },
     {
-      "label": "Build Jekyll Site",
-      "type": "shell",
-      "command": "./tools/test.sh",
-      "group": {
-        "kind": "build"
-      },
-      "problemMatcher": [],
-      "detail": "Build the Jekyll site for production."
-    },
-    {
-      "label": "블로그: 새 포스트 생성",
-      "type": "shell",
-      "command": "./scripts/blog-manager.sh new",
+      "label": "빌드",
+      "type": "npm",
+      "script": "build",
       "group": "build",
       "problemMatcher": [],
-      "detail": "대화형으로 새 포스트를 생성합니다.",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      }
+      "detail": "_site/ 에 배포용 산출물 생성"
     },
     {
-      "label": "블로그: 포스트 목록 보기",
+      "label": "새 글",
       "type": "shell",
-      "command": "./scripts/blog-manager.sh list",
-      "group": "build",
+      "command": "npm run new",
       "problemMatcher": [],
-      "detail": "모든 포스트 목록을 표시합니다.",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      }
+      "detail": "대화형으로 새 글 만들기",
+      "presentation": { "reveal": "always", "panel": "new" }
     },
     {
-      "label": "블로그: 통계 보기",
+      "label": "검증 (테스트 + URL + 링크)",
       "type": "shell",
-      "command": "./scripts/blog-manager.sh stats",
-      "group": "build",
+      "command": "npm test && npm run verify:urls && npm run verify:links",
+      "group": "test",
       "problemMatcher": [],
-      "detail": "블로그 통계를 표시합니다.",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      }
-    },
-    {
-      "label": "블로그: 로컬 서버 실행",
-      "type": "shell",
-      "command": "./scripts/blog-manager.sh serve",
-      "group": "build",
-      "problemMatcher": [],
-      "detail": "Jekyll 로컬 서버를 실행합니다.",
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated"
-      },
-      "isBackground": true
+      "detail": "CI 가 배포 전에 돌리는 것과 같은 검사",
+      "presentation": { "reveal": "always", "panel": "new" }
     }
   ]
 }

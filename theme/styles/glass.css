@@ -1,0 +1,131 @@
+/*
+ * Liquid Glass 재질.
+ *
+ * Apple 이 말하는 세 겹을 CSS 세 겹에 대응시킨다:
+ *
+ *   조명(illumination)  → background: 반투명 틴트 + backdrop-filter
+ *   하이라이트(highlight) → ::before 의 그라디언트 + inset 상단 하이라이트
+ *   그림자(shadow)       → inset 하단 어두운 테두리 + 바깥 그림자
+ *
+ * 진짜 굴절(refraction)은 SVG 변위 필터나 WebGL 이 필요하다. 스크롤할 때마다
+ * 배경을 다시 샘플링해야 해서 저사양 기기에서 프레임이 떨어지고, 텍스트를 읽는 게
+ * 목적인 블로그에 줄 이득이 없다. 그래서 굴절은 포기하고 "반투명 + 채도 상승 +
+ * 가장자리 대비"까지만 간다. 실제로 macOS 화면에서 유리처럼 보이게 하는 건
+ * 대부분 이 가장자리 처리다.
+ */
+
+/*
+ * 주의: 여기에 `position` 을 넣지 말 것.
+ *
+ * 한때 `.glass` 가 `position: relative` 를 갖고 있었는데, 이걸 모달 `<dialog>` 에
+ * 붙이면 UA 기본값인 `position: fixed` 를 덮어써서 다이얼로그가 문서 흐름 안으로
+ * 들어간다. 그 결과 검색창을 열 때마다 문서 스크롤이 맨 위로 튀어, 닫고 나면
+ * 읽던 자리를 잃었다. 위치 기준이 필요한 건 스페큘러 하나뿐이므로 그쪽에만 준다.
+ */
+.glass {
+  background: var(--glass-tint);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  /*
+   * 위쪽은 밝게, 아래쪽은 어둡게. 2026 업데이트에서 "어두워진 가장자리와 밝아진
+   * 스페큘러가 깊이와 분리감을 만든다"고 한 부분이 바로 이 두 줄이다.
+   */
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    inset 0 -1px 0 var(--glass-edge);
+}
+
+/* 떠 있는 유리 — 팝오버·다이얼로그. 바깥 그림자로 층을 분명히 띄운다. */
+.glass--floating {
+  background: var(--glass-tint-strong);
+  border: var(--rule) solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    inset 0 -1px 0 var(--glass-edge),
+    var(--shadow-lg);
+}
+
+/*
+ * 붙어 있는 유리 — 툴바·사이드바.
+ * 2026 업데이트에서 사이드바가 floating 에서 edge-to-edge 로 바뀌며 불필요한
+ * 그림자가 빠졌다. 그래서 여기는 바깥 그림자 없이 경계선 하나로만 나눈다.
+ */
+.glass--bar {
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  border-bottom: var(--rule) solid var(--line);
+}
+
+/*
+ * 포인터를 따라 도는 스페큘러 — 다크 모드 전용.
+ *
+ * macOS 에서 창을 움직이면 하이라이트가 따라 흐르는데, 웹에서 그걸 흉내 내려면
+ * 포인터 좌표가 필요하다. JS(theme/scripts/glass.js)가 --mx/--my 를 채워주고
+ * 여기서는 그 지점에 옅은 원형 그라디언트를 얹는다.
+ *
+ * 라이트 모드에서는 끈다. 흰 하이라이트를 밝은 종이색 위에 얹으면 빛으로 읽히지
+ * 않고 얼룩처럼 보인다. 어두운 배경에서만 "유리에 빛이 스친다"가 성립한다.
+ * 그래서 기본값은 꺼짐이고, 다크일 때만 켠다.
+ */
+/*
+ * 전제: `.glass--specular` 를 붙이는 요소는 이미 위치가 잡혀 있어야 한다
+ * (sticky/relative/absolute/fixed 중 하나). 아래 ::before 가 그 요소를 기준으로
+ * 깔리기 때문이다. 지금 쓰는 곳은 헤더이고 헤더는 sticky 라 조건을 만족한다.
+ * 여기서 position 을 강제하지 않는 이유는 위 주석에 적은 dialog 사고 때문이다.
+ */
+.glass--specular::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+  transition: opacity var(--duration-slow) var(--ease);
+  background: radial-gradient(
+    18rem circle at var(--mx, -100%) var(--my, -100%),
+    var(--glass-highlight),
+    transparent 60%
+  );
+}
+
+:root[data-theme='dark'] .glass--specular::before {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .glass--specular::before {
+    display: block;
+  }
+}
+
+.glass--specular:hover::before {
+  opacity: 1;
+}
+
+/* 마우스가 없는 기기에서는 스페큘러를 아예 만들지 않는다. */
+@media (hover: none) {
+  .glass--specular::before {
+    display: none;
+  }
+}
+
+/*
+ * 투명도 축소 설정에서는 유리가 아니라 그냥 판이 된다.
+ * 토큰 쪽에서 이미 블러와 틴트를 껐고, 여기서는 남은 하이라이트까지 지운다.
+ */
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass--floating,
+  .glass--bar {
+    box-shadow: none;
+    border-color: var(--line);
+  }
+
+  .glass--floating {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .glass--specular::before {
+    display: none;
+  }
+}

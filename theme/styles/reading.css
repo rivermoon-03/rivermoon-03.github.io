@@ -1,0 +1,278 @@
+/*
+ * 읽기 보조 요소 — 진행률, 맨 위로, 헤딩 앵커, 외부 링크, 이미지 확대, 단축키 도움말.
+ *
+ * 공통 원칙: 평소에는 보이지 않거나 아주 흐리게 있다가 필요할 때만 나온다.
+ * 글을 읽는 화면에서 보조 장치가 먼저 눈에 띄면 그건 방해다.
+ */
+
+/* ── 읽기 진행률 ──────────────────────────────────────────── */
+/*
+ * 헤더 아래쪽 경계선 위에 얹는다. 별도 줄을 차지하지 않으면서 위치는 분명하다.
+ * width 대신 scaleX 를 쓴다 — width 는 매 프레임 레이아웃을 다시 돌리지만
+ * transform 은 컴포지터에서 끝난다.
+ */
+.read-progress {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  width: 100%;
+  background: var(--accent);
+  transform: scaleX(var(--progress, 0));
+  transform-origin: left;
+  pointer-events: none;
+}
+
+/* ── 맨 위로 ──────────────────────────────────────────────── */
+.to-top {
+  position: fixed;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-pill);
+  border: var(--rule) solid var(--glass-border);
+  background: var(--glass-tint-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: var(--shadow);
+  color: var(--ink-muted);
+
+  /* 숨어 있을 때는 클릭도 안 받아야 한다. visibility 까지 꺼야 확실하다. */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(var(--space-3)) scale(0.9);
+  transition:
+    opacity var(--duration) var(--ease-out),
+    transform var(--duration) var(--ease-spring),
+    visibility var(--duration);
+}
+
+.to-top.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.to-top:hover {
+  color: var(--ink-strong);
+}
+
+.to-top:active {
+  transform: scale(0.92);
+}
+
+@media (max-width: 48rem) {
+  .to-top {
+    right: var(--space-4);
+    bottom: var(--space-4);
+  }
+}
+
+/* ── 헤딩 앵커 ────────────────────────────────────────────── */
+/*
+ * 평소에는 투명. 헤딩에 마우스를 올리거나 키보드로 포커스하면 나타난다.
+ * 제목마다 '#' 이 상시 붙어 있으면 본문이 시끄러워진다.
+ */
+.heading-anchor {
+  margin-left: var(--space-3);
+  font-weight: 400;
+  color: var(--ink-faint);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+}
+
+.prose h2:hover .heading-anchor,
+.prose h3:hover .heading-anchor,
+.prose h4:hover .heading-anchor,
+.heading-anchor:focus-visible {
+  opacity: 1;
+}
+
+.heading-anchor:hover {
+  color: var(--accent);
+}
+
+/* 링크를 복사했을 때의 확인 표시. */
+.heading-anchor[data-copied] {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.heading-anchor[data-copied]::after {
+  content: '주소 복사됨';
+  margin-left: var(--space-2);
+  font-size: var(--text-xs);
+}
+
+/* 터치 기기에서는 호버가 없으므로 항상 흐리게 보여준다. */
+@media (hover: none) {
+  .heading-anchor {
+    opacity: 0.35;
+  }
+}
+
+/* ── 외부 링크 ────────────────────────────────────────────── */
+/*
+ * 누르면 사이트를 벗어난다는 걸 미리 알려준다. 아이콘이 아니라 문자로 그리므로
+ * 이미지 요청이 늘지 않는다.
+ */
+.prose a[data-external]::after {
+  content: '↗';
+  display: inline-block;
+  margin-left: 0.15em;
+  font-size: 0.8em;
+  vertical-align: 0.15em;
+  opacity: 0.6;
+}
+
+/* ── 이미지 확대 ──────────────────────────────────────────── */
+.prose img.is-zoomable {
+  cursor: zoom-in;
+  transition: transform var(--duration) var(--ease-out);
+}
+
+.prose img.is-zoomable:hover {
+  transform: scale(1.01);
+}
+
+.lightbox {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: var(--space-6);
+  border: none;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+}
+
+.lightbox::backdrop {
+  background: rgb(0 0 0 / 82%);
+  backdrop-filter: blur(6px);
+}
+
+.lightbox__figure {
+  margin: 0;
+  max-width: min(100%, 80rem);
+  animation: zoom-in var(--duration) var(--ease-spring);
+}
+
+@keyframes zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+
+.lightbox__figure img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  background: var(--bg-raised);
+}
+
+.lightbox__figure figcaption {
+  margin-top: var(--space-3);
+  text-align: center;
+  font-size: var(--text-sm);
+  /* 배경이 항상 어두우므로 테마와 무관하게 밝은 글자를 쓴다. */
+  color: rgb(255 255 255 / 78%);
+}
+
+.lightbox__close {
+  position: fixed;
+  top: var(--space-5);
+  right: var(--space-5);
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-pill);
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
+  transition: background var(--duration-fast) var(--ease), transform var(--duration-fast) var(--ease);
+}
+
+.lightbox__close:hover {
+  background: rgb(255 255 255 / 22%);
+}
+
+.lightbox__close:active {
+  transform: scale(0.92);
+}
+
+/* ── 단축키 도움말 ────────────────────────────────────────── */
+.shortcuts {
+  width: min(24rem, calc(100vw - 2rem));
+  padding: var(--space-5);
+  border-radius: var(--radius-xl);
+  color: var(--ink);
+  animation: zoom-in var(--duration) var(--ease-spring);
+}
+
+.shortcuts::backdrop {
+  background: rgb(0 0 0 / 32%);
+  backdrop-filter: blur(3px);
+}
+
+.shortcuts__title {
+  font-size: var(--text-base);
+  margin-bottom: var(--space-4);
+}
+
+.shortcuts__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.shortcuts__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.shortcuts__row dt {
+  flex-shrink: 0;
+  width: 7rem;
+}
+
+.shortcuts__row dd {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.shortcuts kbd {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  padding: 2px var(--space-2);
+  border: var(--rule) solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-xs);
+  background: var(--bg-raised);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lightbox__figure,
+  .shortcuts {
+    animation: none;
+  }
+
+  .prose img.is-zoomable:hover,
+  .to-top:active,
+  .lightbox__close:active {
+    transform: none;
+  }
+}

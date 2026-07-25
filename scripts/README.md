@@ -1,17 +1,19 @@
-# 블로그 관리 스크립트
+# 스크립트
 
-## 새 포스트 생성
-```bash
-./scripts/new-post.sh [잡담|개발|리뷰] "제목"
-```
-카테고리는 front matter의 `categories` 필드로 자동 설정됩니다.
+## 새 글 만들기
 
-## 블로그 관리
 ```bash
-./scripts/blog-manager.sh list      # 포스트 목록
-./scripts/blog-manager.sh list 잡담 # 특정 카테고리 목록
-./scripts/blog-manager.sh stats     # 통계
-./scripts/blog-manager.sh new       # 새 포스트 (대화형)
-./scripts/blog-manager.sh serve     # 로컬 서버
-./scripts/blog-manager.sh build     # 빌드
+npm run new -- 백준 "2751번 - 수 정렬하기 2"
+npm run new                                    # 대화형
 ```
+
+`_posts/<카테고리>/YYYY-MM-DD-<제목>.md` 를 만들고, 만들어질 URL을 함께 보여준다.
+카테고리 목록은 `_posts/` 하위 디렉토리에서 읽으므로 새 카테고리를 쓰면 알려만 주고 그대로 만든다.
+
+## 나머지
+
+블로그 관리 명령은 전부 `npm run` 으로 옮겼다. [최상위 README](../README.md) 참고.
+
+- `npm run dev` — 개발 서버
+- `npm run build` — 빌드
+- `npm test` / `npm run verify:urls` / `npm run verify:links` — 검증

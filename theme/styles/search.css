@@ -1,0 +1,143 @@
+/*
+ * 검색 오버레이.
+ *
+ * macOS Spotlight 의 모양을 따랐다. 화면 위쪽 3분의 1 지점에 유리판이 떠 있고,
+ * 입력줄과 결과가 한 덩어리로 붙어 있는 형태. 마크업은 search.js 가 처음 열릴 때
+ * 만든다 — 모든 페이지에 검색창 HTML 을 심어둘 이유가 없다.
+ */
+
+.search-dialog {
+  width: min(38rem, calc(100vw - 2rem));
+  max-height: min(32rem, calc(100dvh - 8rem));
+  margin: 14vh auto auto;
+  padding: 0;
+  border-radius: var(--radius-xl);
+  color: var(--ink);
+  overflow: hidden;
+  /* 열릴 때 살짝 튀어 올라온다. 사용자가 직접 부른 창이라 스프링이 어울린다. */
+  animation: spotlight-in var(--duration) var(--ease-spring);
+}
+
+@keyframes spotlight-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+}
+
+.search-dialog::backdrop {
+  background: rgb(0 0 0 / 32%);
+  backdrop-filter: blur(3px);
+  animation: fade-in var(--duration) var(--ease);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-dialog,
+  .search-dialog::backdrop {
+    animation: none;
+  }
+}
+
+.search-dialog__input {
+  width: 100%;
+  padding: var(--space-5);
+  border: none;
+  border-bottom: var(--rule) solid var(--line);
+  background: transparent;
+  font-size: var(--text-lg);
+  outline: none;
+}
+
+.search-dialog__input::placeholder {
+  color: var(--ink-faint);
+}
+
+/* type=search 의 네이티브 지우기 버튼은 브라우저 기본 파란색이라 테마와 겉돈다. */
+.search-dialog__input::-webkit-search-cancel-button,
+.search-dialog__input::-webkit-search-decoration {
+  appearance: none;
+  display: none;
+}
+
+.search-dialog__results {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2);
+  overflow-y: auto;
+  max-height: 22rem;
+  scrollbar-width: thin;
+}
+
+.search-result__link {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  transition: background var(--duration-fast) var(--ease);
+}
+
+/*
+ * 키보드로 옮겨 다닐 때의 현재 항목과 마우스 호버를 같은 모양으로 칠한다.
+ * Spotlight 도 둘을 구분하지 않는다 — 구분하면 "지금 엔터를 치면 뭐가 열리지"가
+ * 헷갈린다.
+ */
+.search-result__link:hover,
+.search-result__link:focus-visible,
+.search-result.is-active .search-result__link {
+  background: var(--accent-wash);
+}
+
+.search-result__title {
+  font-weight: 600;
+  font-size: var(--text-base);
+  line-height: var(--leading-snug);
+}
+
+/* 일치 구간 강조 */
+.search-result__title mark,
+.search-result__excerpt mark {
+  background: transparent;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.search-result__excerpt {
+  margin-top: 2px;
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  line-height: var(--leading-snug);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.search-result__meta {
+  margin-top: var(--space-2);
+  display: flex;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.search-dialog__empty {
+  padding: var(--space-6);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+.search-dialog__footer {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  border-top: var(--rule) solid var(--line);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}

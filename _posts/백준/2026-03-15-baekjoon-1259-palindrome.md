@@ -1,0 +1,42 @@
+---
+title: 백준 - 1259번 - 팰린드롬수 - Python
+date: "2026-03-15 00:00:00 +0900"
+categories: [백준]
+tags: [백준]
+toc: true
+redirect_from:
+  - /posts/백준-1259번-팰린드롬수-python/
+---
+
+[1259번 - 팰린드롬수](https://www.acmicpc.net/problem/1259)
+
+### 코드 설계
+---
+ - 숫자를 받는다. 계산하는 건 없으므로 `str()`로 받아도 무방하다. (이쪽이 더 편하다)
+ - 문자열의 **맨 앞**과 **맨 뒤**를 비교한다. (`number[0] == number[-1]`)
+ - 그리고 **앞에서 2번째, 뒤에서 2번째** 를 비교한다. (`number[1] == number[-2]`)
+   - `number[i] == number[j]` 로 나타낸다면, `j  = i * -1 - 1`이 된다.
+
+### 코드
+```Python
+# 입력부
+while True:
+    number = input()
+    if number == "0":
+        break  # 0이면 나가기
+
+    # 예 : 12421
+    # 맨 뒤와 맨 앞의 값을 비교하고, 점점 안쪽으로 들어온다.
+    # 이걸 길이 / 2번 반복하면 된다. 소수점은 버리고.
+
+    repeat = int(len(number) / 2)
+    isPalin = True
+    for i in range(repeat):
+        # number[0] == number[-1]
+        # number[1] == number[-2]
+        # i = 0, 1.. 이면, 맨 뒤는 i * (-1) - 1
+        if number[i] != number[(i * -1) - 1]:
+            isPalin = False
+
+    print("yes") if isPalin == True else print("no")
+```

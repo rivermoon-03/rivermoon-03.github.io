@@ -1,0 +1,77 @@
+/*
+ * 문서 기본값과 공통 타이포그래피.
+ */
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  letter-spacing: var(--tracking-normal);
+  font-feature-settings: 'ss01', 'tnum';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3, h4 {
+  color: var(--ink-strong);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
+}
+
+/* 본문 링크만 밑줄. 내비게이션·카드 링크까지 밑줄이 깔리면 화면이 시끄러워진다. */
+a {
+  transition: color var(--duration) var(--ease);
+}
+
+strong {
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+/*
+ * 숫자는 어디서나 자리를 맞춘다.
+ *
+ * 예전에는 메타 정보를 통째로 고정폭 폰트로 돌렸는데, 한글이 강제로 벌어져
+ * "이전 글", "2026년 3월"이 흩어져 보였다. macOS 가 SF Pro 하나로 UI 를 끌고
+ * 가듯 여기도 Pretendard 하나로 가고, 정렬이 필요한 숫자만 tabular-nums 로 잡는다.
+ */
+time,
+.badge,
+.tag,
+[class*='__count'],
+[class*='__day'],
+[class*='__read'] {
+  font-variant-numeric: tabular-nums;
+}
+
+.section-title {
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-5);
+}
+
+/* 스크린리더/키보드 사용자용 본문 바로가기. 포커스될 때만 보인다. */
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: var(--space-4);
+  z-index: 100;
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transform: translateY(-200%);
+  transition: transform var(--duration) var(--ease);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
