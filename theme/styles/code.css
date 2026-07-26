@@ -46,7 +46,12 @@
   background: var(--bg-sunken);
 }
 
+/*
+ * 언어 라벨은 본문이 아니라 코드 블록의 이름표다. 본문 서체를 물려받게 두면
+ * 명조에서 PYTHON 이 작은 대문자처럼 보여 아래 코드와 겉돈다.
+ */
 .code-block__lang {
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   letter-spacing: var(--tracking-wide);
   color: var(--ink-faint);

@@ -24,6 +24,9 @@ function toRef(post) {
     title: post.title,
     date: post.date,
     categories: post.categories,
+    // 태그도 함께 넘긴다. 분류 페이지가 "이 묶음 안에서 같이 쓰인 분류"를 세려면
+    // 참조만 보고 알 수 있어야 한다 — 없으면 테마가 원본 포스트를 되찾아야 한다.
+    tags: post.tags,
     excerpt: post.excerpt,
     charCount: post.charCount,
   };

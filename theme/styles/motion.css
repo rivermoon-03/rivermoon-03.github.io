@@ -66,29 +66,29 @@
  */
 .post-list > li,
 .post-rows > li,
-.chip-list > li,
-.archive-month {
+.topic-list > li,
+.filetable__body > li {
   animation: rise-in 260ms var(--ease-out) backwards;
 }
 
 .post-list > li:nth-child(1),
 .post-rows > li:nth-child(1),
-.chip-list > li:nth-child(1) { animation-delay: 0ms; }
+.topic-list > li:nth-child(1) { animation-delay: 0ms; }
 .post-list > li:nth-child(2),
 .post-rows > li:nth-child(2),
-.chip-list > li:nth-child(2) { animation-delay: 30ms; }
+.topic-list > li:nth-child(2) { animation-delay: 30ms; }
 .post-list > li:nth-child(3),
 .post-rows > li:nth-child(3),
-.chip-list > li:nth-child(3) { animation-delay: 60ms; }
+.topic-list > li:nth-child(3) { animation-delay: 60ms; }
 .post-list > li:nth-child(4),
 .post-rows > li:nth-child(4),
-.chip-list > li:nth-child(4) { animation-delay: 90ms; }
+.topic-list > li:nth-child(4) { animation-delay: 90ms; }
 .post-list > li:nth-child(5),
 .post-rows > li:nth-child(5),
-.chip-list > li:nth-child(5) { animation-delay: 120ms; }
+.topic-list > li:nth-child(5) { animation-delay: 120ms; }
 .post-list > li:nth-child(n + 6),
 .post-rows > li:nth-child(n + 6),
-.chip-list > li:nth-child(n + 6) { animation-delay: 150ms; }
+.topic-list > li:nth-child(n + 6) { animation-delay: 150ms; }
 
 /* 인스펙터(목차)는 본문보다 살짝 늦게. 주된 내용이 먼저 자리를 잡아야 한다. */
 .canvas__aside {
@@ -188,15 +188,15 @@
   transform: translateX(2px);
 }
 
-/* 테마 아이콘 교체. 그냥 바뀌는 대신 돌면서 들어온다. */
-.theme-icon {
-  animation: icon-swap 260ms var(--ease-spring) backwards;
+/* 보기 설정 팝오버. 버튼 아래에서 살짝 내려오며 열린다. */
+.appearance:popover-open {
+  animation: menu-drop 200ms var(--ease-out) backwards;
 }
 
-@keyframes icon-swap {
+@keyframes menu-drop {
   from {
     opacity: 0;
-    transform: rotate(-40deg) scale(0.7);
+    transform: translateY(-6px) scale(0.98);
   }
 }
 
@@ -254,7 +254,6 @@
 
   /* 이동·확대가 들어간 것들은 개별적으로 끈다. */
   .post-row__link:hover,
-  .chip:hover,
   .post-nav__item:hover,
   .tool-button:active,
   .nav-pill:active,
@@ -264,7 +263,7 @@
     transform: none;
   }
 
-  .theme-icon,
+  .appearance:popover-open,
   .code-block__copy[data-copied] {
     animation: fade-in-motion 120ms linear backwards;
   }

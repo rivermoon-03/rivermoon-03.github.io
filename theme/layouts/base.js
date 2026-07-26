@@ -18,8 +18,11 @@ import { siteFooter } from '../partials/footer.js';
 /**
  * 저장된 선택 → 없으면 시스템 설정. CSS 보다 먼저 실행되어야 의미가 있어서 인라인이다.
  * 이 한 조각 때문에 다크모드에서 흰 화면이 번쩍이지 않는다.
+ *
+ * 서체도 여기서 정한다. 나중에 JS 로 바꾸면 한 문단이 고딕으로 그려졌다가 명조로
+ * 다시 흐르는 게 보이는데, 글자가 움직이는 건 색이 번쩍이는 것보다 더 눈에 띈다.
  */
-const THEME_BOOTSTRAP = `(function(){try{var s=localStorage.getItem('theme');var d=s||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=d;}catch(e){}})()`;
+const APPEARANCE_BOOTSTRAP = `(function(){try{var r=document.documentElement,s=localStorage;var t=s.getItem('theme');r.dataset.theme=t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');var f=s.getItem('font');if(f)r.dataset.font=f;}catch(e){}})()`;
 
 /**
  * @param {object} input
@@ -32,9 +35,9 @@ const THEME_BOOTSTRAP = `(function(){try{var s=localStorage.getItem('theme');var
  */
 export function base({ site, url, meta, body, aside = null, bodyClass = '' }) {
   return html`<!doctype html>
-<html lang="${site.config.lang}" data-theme="light">
+<html lang="${site.config.lang}" data-theme="light" data-font="serif">
 <head>
-<script>${raw(THEME_BOOTSTRAP)}</script>
+<script>${raw(APPEARANCE_BOOTSTRAP)}</script>
 ${head({ site, url, meta })}
 </head>
 <body${raw(bodyClass ? ` class="${bodyClass}"` : '')}>

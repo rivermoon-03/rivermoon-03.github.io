@@ -25,6 +25,35 @@ h1, h2, h3, h4 {
   text-wrap: balance;
 }
 
+/*
+ * 읽는 글은 본문 서체를 따른다 (기본 명조, 우상단 설정에서 고딕으로 바꿀 수 있다).
+ *
+ * 목록을 여기 한 곳에 모아 두는 이유: 컴포넌트마다 font-family 를 흩어 놓으면
+ * 새 화면을 만들 때 빠뜨리고, 같은 페이지 안에서 제목만 고딕인 글이 생긴다.
+ * 판단 기준은 하나다 — **읽는 것인가, 누르는 것인가.** 헤더·배지·버튼·날짜는
+ * 누르거나 훑는 것이라 Pretendard 로 남는다.
+ */
+.prose,
+.post__title,
+.post-item__title,
+.post-item__excerpt,
+.post-row__title,
+.post-nav__title,
+.related__list,
+.hero__title {
+  font-family: var(--font-reading);
+}
+
+/*
+ * 명조는 같은 크기에서 고딕보다 작고 흐리게 보인다. 획이 얇고 글자 속공간이 좁아서
+ * 그렇다. 그래서 명조일 때만 본문을 아주 살짝 키우고 자간을 0 으로 되돌린다 —
+ * 고딕용으로 좁혀둔 자간(-0.011em)을 명조에 그대로 쓰면 획이 서로 붙어 보인다.
+ */
+:root:not([data-font='sans']) .prose {
+  font-size: 1.09rem;
+  letter-spacing: 0;
+}
+
 /* 본문 링크만 밑줄. 내비게이션·카드 링크까지 밑줄이 깔리면 화면이 시끄러워진다. */
 a {
   transition: color var(--duration) var(--ease);

@@ -24,6 +24,23 @@
     system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   --font-meta: var(--font-sans);
 
+  /*
+   * 본문 명조. 읽는 글에만 쓰고 UI(헤더·배지·메타)는 계속 Pretendard 다.
+   *
+   * 전부 명조로 바꾸지 않는 이유: 무엇이 읽을 것이고 무엇이 누를 것인지가 서체로
+   * 갈린다. Medium 도 Claude 도 본문만 세리프를 쓴다. 이 블로그는 메타 정보가
+   * 이미 모노스페이스라, 셋(본문 명조 / UI 고딕 / 메타 모노)이 각자 역할을 갖는다.
+   *
+   * 영문 가족이 앞에 온다. 한글 명조에도 라틴 글자가 들어 있지만 본문용으로
+   * 다듬어져 있지 않아, 코드·URL 이 섞인 문장에서 폭과 무게가 튄다. 본명조의 라틴은
+   * 원래 Source Serif 계열이라 둘을 이어 붙여도 이질감이 적다.
+   */
+  --font-serif: 'Source Serif 4', 'Noto Serif KR', ui-serif, Georgia,
+    AppleMyungjo, Batang, serif;
+
+  /* 읽는 글이 실제로 쓰는 값. 우상단 설정이 [data-font] 로 이걸 바꾼다. */
+  --font-reading: var(--font-serif);
+
   /* 코드 전용. 한글 폴백도 고정폭(D2Coding)으로 둬야 주석이 든 코드의 열이 안 어긋난다. */
   --font-mono: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Mono',
     Menlo, Consolas, 'D2Coding', 'Nanum Gothic Coding', monospace;
@@ -99,6 +116,12 @@
 }
 
 /*
+ * 본문 서체 선택. 기본은 명조이고, 예전 화면을 선호하는 독자를 위해 고딕을 남긴다.
+ * 색과 달리 시스템 설정에 대응하는 값이 없으므로 저장된 선택만 본다.
+ */
+:root[data-font='sans'] { --font-reading: var(--font-sans); }
+
+/*
  * ── 색 ────────────────────────────────────────────────────────────────────
  *
  * 라이트/다크 값을 `light-dark()` 로 한 줄에 적는다. 예전에는 같은 변수 묶음을
@@ -138,6 +161,28 @@
   --accent-wash:     light-dark(#f6edd8, #1c1710);
 
   --selection: light-dark(#f7e4b0, #3d3211);
+
+  /*
+   * 저장소 언어 점. 호박색 하나로 끌고 가는 사이트에서 유일하게 색을 여러 개
+   * 쓰는 자리다 — GitHub 저장소 목록의 언어 점이 그렇듯, 카테고리를 색으로
+   * 구별하는 게 목적이라 서로 달라야 의미가 있다. 채도는 낮춰서 본문의 호박색이
+   * 계속 주인공으로 남게 한다. 카테고리 순서대로 1→5 가 배정된다.
+   */
+  --repo-dot-1: light-dark(#3572a5, #79b8ff);
+  --repo-dot-2: light-dark(#8a6d1f, #dbab09);
+  --repo-dot-3: light-dark(#2f6f4e, #56d364);
+  --repo-dot-4: light-dark(#7146c4, #b392f0);
+  --repo-dot-5: light-dark(#a63b2a, #f97583);
+
+  /*
+   * 잔디 농도. 글이 없는 날은 배경 한 톤 아래, 나머지는 호박색을 그 위에 섞는다.
+   * 리터럴을 새로 만들지 않고 --accent 에서 파생시키므로 강조색을 바꾸면 잔디도
+   * 같이 따라온다.
+   */
+  --grass-0: var(--bg-inset);
+  --grass-1: color-mix(in oklab, var(--accent) 32%, var(--bg-inset));
+  --grass-2: color-mix(in oklab, var(--accent) 62%, var(--bg-inset));
+  --grass-3: var(--accent);
 
   --shadow-sm: light-dark(
     0 1px 2px rgb(20 18 12 / 8%),

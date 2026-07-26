@@ -22,6 +22,9 @@ const STYLE_ORDER = [
   'glass.css',
   'layout.css',
   'components.css',
+  // repo 가 home 보다 먼저. 홈 레일은 저장소 뷰 조각을 좁은 자리에 맞게 덮어쓴다.
+  'repo.css',
+  'home.css',
   'prose.css',
   'code.css',
   'search.css',
@@ -32,7 +35,7 @@ const STYLE_ORDER = [
 
 /** JS 는 의존 관계가 없어 순서가 자유롭지만, 읽기 좋게 고정해둔다. */
 const SCRIPT_ORDER = [
-  'theme-toggle.js',
+  'appearance.js',
   'glass.js',
   'copy-code.js',
   'toc.js',

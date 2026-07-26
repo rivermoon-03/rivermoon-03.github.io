@@ -6,6 +6,7 @@ import { html, each, when } from '../../engine/html.js';
 import { base } from './base.js';
 import { postCard } from '../partials/post-card.js';
 import { pagination } from '../partials/pagination.js';
+import { homeRail } from '../partials/home-rail.js';
 
 export function home({ site, url, page }) {
   const isFirst = page.number === 1;
@@ -14,6 +15,9 @@ export function home({ site, url, page }) {
     site,
     url,
     bodyClass: 'page-home',
+    // 왼쪽은 최근 글, 오른쪽은 사이트 자체의 요약. 포스트 페이지의 목차와 같은
+    // 자리를 쓰므로 레일 폭·sticky 동작은 base 의 인스펙터 규칙을 그대로 물려받는다.
+    aside: homeRail({ site }),
     meta: {
       description: site.config.description,
       // 2페이지부터는 제목에 페이지 번호를 넣어 중복 제목을 피한다.

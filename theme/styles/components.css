@@ -102,32 +102,82 @@
   }
 }
 
-/* 테마에 따라 해/달 중 하나만. color-scheme 를 그대로 따라간다. */
-.theme-icon {
-  display: none;
+/* ── 보기 설정 팝오버 ─────────────────────────────────────── */
+/*
+ * 위치를 anchor positioning 으로 잡지 않는다. 아직 브라우저가 갈리는데, 이 팝오버를
+ * 여는 버튼은 항상 고정된 툴바의 오른쪽 끝에 있다 — 좌표가 이미 알려져 있는 자리에
+ * 실험적인 기능을 쓸 이유가 없다.
+ */
+.appearance {
+  position: fixed;
+  inset: auto var(--space-4) auto auto;
+  top: calc(var(--toolbar-height) + var(--space-2));
+  margin: 0;
+  padding: var(--space-4);
+  width: 15rem;
+  border-radius: var(--radius-lg);
+  color: var(--ink);
 }
 
-.theme-icon--sun {
-  display: inline-flex;
+.appearance:popover-open {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
-:root[data-theme='dark'] .theme-icon--sun {
-  display: none;
+.appearance::backdrop {
+  background: transparent;
 }
 
-:root[data-theme='dark'] .theme-icon--moon {
-  display: inline-flex;
+.appearance__label {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--ink-faint);
+  letter-spacing: var(--tracking-wide);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .theme-icon--sun {
-    display: none;
-  }
-
-  :root:not([data-theme='light']) .theme-icon--moon {
-    display: inline-flex;
-  }
+.appearance__note {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
 }
+
+/* 분절 컨트롤. 고른 하나가 눌린 채로 남는다. */
+.seg {
+  display: flex;
+  padding: 2px;
+  gap: 2px;
+  border: var(--rule) solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-sunken);
+}
+
+.seg__option {
+  flex: 1;
+  padding: var(--space-1) 0;
+  border-radius: var(--radius-xs);
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  transition:
+    background var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.seg__option:hover {
+  color: var(--ink-strong);
+}
+
+.seg__option[aria-pressed='true'] {
+  background: var(--bg-raised);
+  color: var(--ink-strong);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 서체 선택지는 그 서체로 보여준다. 이름보다 모양이 빠르다. */
+[data-set-font='serif'] { font-family: var(--font-serif); }
+[data-set-font='sans'] { font-family: var(--font-sans); }
 
 /* ── 홈 히어로 ────────────────────────────────────────────── */
 .hero {
@@ -309,169 +359,6 @@ a.badge:hover {
 
 .tag:hover {
   color: var(--accent);
-}
-
-.chip-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-7);
-}
-
-.chip {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  border: var(--rule) solid var(--line);
-  border-radius: var(--radius-pill);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  transition:
-    border-color var(--duration-fast) var(--ease),
-    color var(--duration-fast) var(--ease),
-    transform var(--duration) var(--ease-spring);
-}
-
-.chip:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  transform: translateY(-1px);
-}
-
-.chip__count {
-  font-size: var(--text-xs);
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
-}
-
-.chip--weighted {
-  font-size: calc(var(--text-sm) + min(var(--weight, 1) * 0.06rem, 0.5rem));
-}
-
-/* ── 분류 페이지 ──────────────────────────────────────────── */
-.taxonomy-group {
-  margin-bottom: var(--space-7);
-}
-
-.taxonomy-group__title {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-  font-size: var(--text-lg);
-  padding-bottom: var(--space-2);
-  margin-bottom: var(--space-2);
-  border-bottom: 2px solid var(--ink-strong);
-}
-
-.taxonomy-group__title a:hover {
-  color: var(--accent);
-}
-
-.taxonomy-group__count,
-.taxonomy-header__count {
-  font-size: var(--text-xs);
-  font-weight: 400;
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
-}
-
-.taxonomy-header {
-  margin-bottom: var(--space-6);
-}
-
-.taxonomy-header__kind {
-  font-size: var(--text-xs);
-  color: var(--accent);
-  margin-bottom: var(--space-2);
-  font-weight: 600;
-}
-
-/* ── 아카이브 ─────────────────────────────────────────────── */
-.archive-header {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-  margin-bottom: var(--space-7);
-}
-
-.archive-header .section-title {
-  margin-bottom: 0;
-}
-
-.archive-year {
-  margin-bottom: var(--space-7);
-}
-
-.archive-year__label {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-  font-size: var(--text-3xl);
-  font-weight: 800;
-  color: var(--ink-strong);
-  letter-spacing: var(--tracking-tight);
-  font-variant-numeric: tabular-nums;
-  margin-bottom: var(--space-4);
-}
-
-.archive-year__count {
-  font-size: var(--text-xs);
-  font-weight: 400;
-  color: var(--ink-faint);
-}
-
-.archive-month {
-  display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr);
-  gap: var(--space-4);
-  padding: var(--space-4) 0;
-  border-top: var(--rule) solid var(--line);
-}
-
-.archive-month__label {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--ink-muted);
-  position: sticky;
-  top: calc(var(--toolbar-height) + var(--space-4));
-  align-self: start;
-}
-
-.archive-month__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.archive-item {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-}
-
-.archive-item__day {
-  flex-shrink: 0;
-  width: 2ch;
-  text-align: right;
-  font-size: var(--text-xs);
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
-}
-
-.archive-item__link:hover {
-  color: var(--accent);
-}
-
-@media (max-width: 40rem) {
-  .archive-month {
-    grid-template-columns: 1fr;
-    gap: var(--space-2);
-  }
-
-  .archive-month__label {
-    position: static;
-  }
 }
 
 /* ── 포스트 헤더 ──────────────────────────────────────────── */
